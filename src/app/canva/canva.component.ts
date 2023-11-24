@@ -1,12 +1,9 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-canva',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './canva.component.html',
-  styleUrl: './canva.component.css'
+  template: '<canvas #canvas width="400" height="400" (click)="handleClick($event)"></canvas>',
+  styleUrls: ['./canva.component.css']
 })
 export class CanvaComponent implements AfterViewInit {
   
@@ -18,20 +15,20 @@ export class CanvaComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     if (this.canvas !== undefined) {
       this.context = this.canvas.nativeElement.getContext('2d') as CanvasRenderingContext2D;
-      // this.context.fillStyle = "green";
-      // this.context.fillRect(100, 100, 100, 100);
+      this.context.fillStyle = 'blue';
+      this.context.fillRect(50, 50, 100, 100);
     }
   }
 
   handleClick(e: MouseEvent): void {
-    
     const x = e.clientX - this.canvas.nativeElement.getBoundingClientRect().left;
     const y = e.clientY - this.canvas.nativeElement.getBoundingClientRect().top;
 
     // Now, you can use x and y to perform actions based on the click position
-    console.log(`Clicked at (${x}, ${y})`);
+    console.log(x, y);
 
-    this.context.fillStyle = 'blue';
-    this.context.fillRect(x, y, 100, 100);
+    // For testing, draw a square at the click position
+    this.context.fillStyle = 'red';
+    this.context.fillRect(x, y, 50, 50);
   }
 }
