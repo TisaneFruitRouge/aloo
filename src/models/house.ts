@@ -1,3 +1,5 @@
+import Wall from "./wall";
+
 class House {
     public walls: Array<Wall>
 
@@ -5,3 +7,5 @@ class House {
         this.walls = walls
     }
 }
+
+export default House;

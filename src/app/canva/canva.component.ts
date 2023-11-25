@@ -1,9 +1,13 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import CanvasController from '../lib/canvas';
 
 @Component({
   selector: 'app-canva',
-  template: '<canvas #canvas width="400" height="400" (click)="handleClick($event)"></canvas>',
-  styleUrls: ['./canva.component.css']
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './canva.component.html',
+  styleUrl: './canva.component.css'
 })
 export class CanvaComponent implements AfterViewInit {
   
@@ -11,24 +15,25 @@ export class CanvaComponent implements AfterViewInit {
   canvas!: ElementRef<HTMLCanvasElement>;
   
   public context!: CanvasRenderingContext2D;
+  private canvasController!: CanvasController;
 
   ngAfterViewInit(): void {
     if (this.canvas !== undefined) {
       this.context = this.canvas.nativeElement.getContext('2d') as CanvasRenderingContext2D;
-      this.context.fillStyle = 'blue';
-      this.context.fillRect(50, 50, 100, 100);
+      this.canvas.nativeElement.width = window.innerWidth;
+      this.canvas.nativeElement.height = window.innerHeight;
+
+      this.canvasController = new CanvasController(this.context, window.innerWidth, window.innerHeight);
     }
+
+    window.addEventListener('mousemove', (e) => {
+      this.canvasController.updateCanva();
+      this.canvasController.drawGhostelement(e.clientX, e.clientY);
+    }, false)
   }
 
   handleClick(e: MouseEvent): void {
-    const x = e.clientX - this.canvas.nativeElement.getBoundingClientRect().left;
-    const y = e.clientY - this.canvas.nativeElement.getBoundingClientRect().top;
-
-    // Now, you can use x and y to perform actions based on the click position
-    console.log(x, y);
-
-    // For testing, draw a square at the click position
-    this.context.fillStyle = 'red';
-    this.context.fillRect(x, y, 50, 50);
+    this.canvasController.updateCanva();
+    this.canvasController.handleClick(e.clientX, e.clientY);
   }
 }
