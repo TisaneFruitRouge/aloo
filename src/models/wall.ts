@@ -1,3 +1,7 @@
+import BaseObject from "./object";
+import Point from "./point";
+import { WallWindow, Door } from "./opening";
+
 class Wall extends BaseObject {
     public doors: Array<Door>;
     public windows: Array<WallWindow>
@@ -14,3 +18,5 @@ class Wall extends BaseObject {
         this.windows = windows;
     }
 }
+
+export default Wall;
