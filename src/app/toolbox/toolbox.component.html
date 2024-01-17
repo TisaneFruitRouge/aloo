@@ -1,14 +1,22 @@
 <section class="fixed flex p-2 gap-8 items-center justify-center top-0 left-0 h-16 w-screen bg-gray-700">
     <fa-icon 
         [icon]="faPenRuler" 
-        ngClass="p-2 hover:bg-black/50 rounded-md duration-200 hover:cursor-pointer fa-xl fa-light text-white"
+        (click)="chooseDraw()"
+        [className]="(currentTool === 0 ? 'bg-black/50 ' : '') + 'p-2 hover:bg-black/50 rounded-md duration-200 hover:cursor-pointer fa-xl fa-light text-white'"
     ></fa-icon>
     <fa-icon 
         [icon]="faDoorClosed" 
-        ngClass="p-2 hover:bg-black/50 rounded-md duration-200 hover:cursor-pointer fa-xl fa-light text-white"
+        (click)="chooseDoor()"
+        [className]="(currentTool === 1 ? 'bg-black/50 ' : '') + 'p-2 hover:bg-black/50 rounded-md duration-200 hover:cursor-pointer fa-xl fa-light text-white'"
     ></fa-icon>
     <fa-icon 
         [icon]="faWindowRestore" 
-        ngClass="p-2 hover:bg-black/50 rounded-md duration-200 hover:cursor-pointer fa-xl fa-light text-white"
+        (click)="chooseWindow()"
+        [className]="(currentTool === 2 ? 'bg-black/50 ' : '') + 'p-2 hover:bg-black/50 rounded-md duration-200 hover:cursor-pointer fa-xl fa-light text-white'"
+    ></fa-icon>
+    <fa-icon 
+        [icon]="faTrash" 
+        (click)="chooseRemove()"
+        [className]="(currentTool === 3 ? 'bg-black/50 ' : '') + 'p-2 hover:bg-black/50 rounded-md duration-200 hover:cursor-pointer fa-xl fa-light text-white'"
     ></fa-icon>
 </section>
