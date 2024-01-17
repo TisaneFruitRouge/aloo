@@ -17,6 +17,16 @@ class Wall extends BaseObject {
         this.doors = doors
         this.windows = windows;
     }
+
+    public drawHover(context: CanvasRenderingContext2D) {
+        // context.beginPath();
+        
+        // context.moveTo(sX, sY);
+        // context.lineTo(eX, eY);
+
+        // // Draw the Path
+        // this.context.stroke();  
+    }
 }
 
 export default Wall;

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import CanvasController from '../lib/canvas';
 
@@ -11,25 +11,19 @@ import CanvasController from '../lib/canvas';
 })
 export class CanvaComponent implements AfterViewInit {
   
+  @Input() canvasController!: CanvasController;
+
   @ViewChild('canvas', { static: false })
   canvas!: ElementRef<HTMLCanvasElement>;
   
   public context!: CanvasRenderingContext2D;
-  private canvasController!: CanvasController;
 
   ngAfterViewInit(): void {
-    if (this.canvas !== undefined) {
-      this.context = this.canvas.nativeElement.getContext('2d') as CanvasRenderingContext2D;
-      this.canvas.nativeElement.width = window.innerWidth;
-      this.canvas.nativeElement.height = window.innerHeight;
-
-      this.canvasController = new CanvasController(this.context, window.innerWidth, window.innerHeight);
-    }
-
     window.addEventListener('mousemove', (e) => {
       this.canvasController.updateCanva();
-      this.canvasController.drawGhostelement(e.clientX, e.clientY);
-    }, false)
+      this.canvasController.mouseX = e.clientX;
+      this.canvasController.mouseY = e.clientY;
+    }, false);
   }
 
   handleClick(e: MouseEvent): void {
