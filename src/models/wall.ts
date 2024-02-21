@@ -27,6 +27,19 @@ class Wall extends BaseObject {
         // // Draw the Path
         // this.context.stroke();  
     }
+
+    public draw(context: CanvasRenderingContext2D) {
+        context.fillStyle = 'black';
+        this.points[0].draw(context);
+        this.points[1].draw(context);
+        Point.drawLine(
+            context,
+            this.points[0].x, 
+            this.points[0].y,
+            this.points[1].x, 
+            this.points[1].y
+        );
+    }
 }
 
 export default Wall;
