@@ -73,6 +73,9 @@ class CanvasController {
             case Tools.Remove:
                 this.clickWithRemove(x, y);
                 break;
+            case Tools.RemoveAll:
+                this.removeAll();
+                break;
         }
     }
 
@@ -153,7 +156,8 @@ class CanvasController {
     }
 
     public removeAll() {
-
+        this.house.walls = [];
+        this.updateCanva();
     }
 
     public setCurrentTool(tool: Tools) {

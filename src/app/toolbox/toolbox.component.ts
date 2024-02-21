@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faPenRuler, faDoorClosed, faWindowRestore, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPenRuler, faDoorClosed, faWindowRestore, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import CanvasController, { Tools } from '../lib/canvas';
 
 @Component({
@@ -19,6 +19,7 @@ export class ToolboxComponent {
   faDoorClosed = faDoorClosed;
   faWindowRestore = faWindowRestore;
   faTrash = faTrash;
+  faXmark = faXmark;
 
   public currentTool = Tools.Draw;
 
@@ -26,4 +27,5 @@ export class ToolboxComponent {
   public chooseWindow = () => {this.canvasController.setCurrentTool(Tools.Window); this.currentTool = Tools.Window}
   public chooseDoor = () => {this.canvasController.setCurrentTool(Tools.Door); this.currentTool = Tools.Door}
   public chooseRemove = () => {this.canvasController.setCurrentTool(Tools.Remove); this.currentTool = Tools.Remove}
+  public chooseRemoveAll = () => {this.canvasController.removeAll();}
 }
