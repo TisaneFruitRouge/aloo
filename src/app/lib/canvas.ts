@@ -42,12 +42,12 @@ class CanvasController {
 
         // drawing last point
         if (this.lastPoint !== null) {
-            this.drawPoint(this.lastPoint.x, this.lastPoint.y);
+            this.lastPoint.draw(this.context);
         }
 
         // drawing the walls
         for (const wall of this.house.walls) {
-            this.drawWall(wall);
+            wall.draw(this.context);
         }
 
         // draw ghost line if necessary
@@ -101,13 +101,13 @@ class CanvasController {
                 );
 
                 if (intersection !== null) {
-                    const newWall = new Wall(this.lastPoint, intersection, 5, [], []);
+                    const newWall = new Wall(this.lastPoint, intersection, WIDTH, [], []);
                     this.lastPoint = intersection;
                     this.house.walls.push(newWall);
                 }
             }
 
-            const newWall = new Wall(this.lastPoint, newPoint, 5, [], []);
+            const newWall = new Wall(this.lastPoint, newPoint, WIDTH, [], []);
             this.house.walls.push(newWall);
 
             if (newPoint === this.hoveredElement) {
@@ -166,12 +166,6 @@ class CanvasController {
         this.ghostMode = false;
     }
 
-    private drawPoint(x:number, y:number) {
-        this.context.fillStyle = 'black';
-
-        this.context.fillRect(x - WIDTH / 2, y - HEIGHT / 2, WIDTH, WIDTH);
-    }
-
     public drawGhostelement(mouseX: number, mouseY: number) {
         if (!this.ghostMode) {
             return;
@@ -182,29 +176,7 @@ class CanvasController {
         }
 
         this.context.fillStyle = 'green';
-        this.drawLine(mouseX, mouseY, this.lastPoint.x, this.lastPoint.y)
-    }
-
-    private drawLine(sX: number, sY: number, eX: number, eY: number) {
-        // Start a new Path
-        this.context.beginPath();
-        this.context.moveTo(sX, sY);
-        this.context.lineTo(eX, eY);
-
-        // Draw the Path
-        this.context.stroke();  
-    }
-
-    private drawWall(wall: Wall) {
-        this.context.fillStyle = 'black';
-        this.drawPoint(wall.points[0].x, wall.points[0].y);
-        this.drawPoint(wall.points[1].x, wall.points[1].y);
-        this.drawLine(
-            wall.points[0].x, 
-            wall.points[0].y,
-            wall.points[1].x, 
-            wall.points[1].y
-        );
+        Point.drawLine(this.context, mouseX, mouseY, this.lastPoint.x, this.lastPoint.y)
     }
 
     private hoverOnElement(x: number, y: number) {
