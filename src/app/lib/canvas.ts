@@ -2,8 +2,10 @@ import House from "../../models/house";
 import { Door, WallWindow } from "../../models/opening";
 import Point from "../../models/point";
 import Wall from "../../models/wall";
+import Command from "./command";
 import { HEIGHT, HOVERING_DISTANCE, WIDTH } from "./constants";
 import { findIntersectionPoint, getDistance, getDistanceFromLine } from "./geomerty";
+import { copyInstanceOfClass } from "./utils";
 
 export enum Tools {
     Draw,
@@ -29,12 +31,27 @@ class CanvasController {
 
     private hoveredElement: Point | Wall | Door | WallWindow | null = null;
 
+    private commands:Array<Command> = [];
+
     public constructor(context: CanvasRenderingContext2D, width: number, height: number) {
         this.context = context;
         this.width = width;
         this.height = height;
 
         this.house = new House(new Array<Wall>());
+    }
+
+    public undo() {
+        const size = this.commands.length;
+
+        if (size < 1) {
+            return;
+        }
+
+        const lastCommand = this.commands[size - 1];
+        lastCommand.undoFnc();
+        this.commands.pop();
+        this.updateCanva();
     }
 
     public updateCanva() {
@@ -85,44 +102,79 @@ class CanvasController {
         if (this.lastPoint !== null) { // creating a wall
             let newPoint: Point;
 
-            if (this.hoveredElement !== null && this.hoveredElement instanceof Point) { // action to perform related to the hovered element
-                newPoint = this.hoveredElement; // the point we clicked was the one hovered
-                this.ghostMode = false;
-            } else { // creating a new point
-                newPoint = new Point(x, y);
-            }
-            
-            for (const wall of this.house.walls) {
-                let intersection = findIntersectionPoint( // finding the intersection
-                    this.lastPoint,
-                    newPoint,
-                    wall.points[0],
-                    wall.points[1]
-                );
+            const currentGhostMode = this.ghostMode;
+            const currentLastPoint = copyInstanceOfClass(this.lastPoint);
+            const currentHouse = copyInstanceOfClass(this.house);
 
-                if (intersection !== null) {
-                    const newWall = new Wall(this.lastPoint, intersection, 5, [], []);
-                    this.lastPoint = intersection;
+            const command = new Command(
+                (canvaController=this) => {
+                    if (this.hoveredElement !== null && this.hoveredElement instanceof Point) { // action to perform related to the hovered element
+                        newPoint = this.hoveredElement; // the point we clicked was the one hovered
+                        this.ghostMode = false;
+                    } else { // creating a new point
+                        newPoint = new Point(x, y);
+                    }
+                    
+                    for (const wall of this.house.walls) {
+                        let intersection = findIntersectionPoint( // finding the intersection
+                        canvaController.lastPoint,
+                            newPoint,
+                            wall.points[0],
+                            wall.points[1]
+                        );
+        
+                        if (intersection !== null && canvaController.lastPoint.id !== intersection.id) {
+                            const newWall = new Wall(canvaController.lastPoint, intersection, 5, [], []);
+                            this.lastPoint = intersection;
+                            this.house.walls.push(newWall);
+                        }
+                    }
+        
+                    const newWall = new Wall(canvaController.lastPoint, newPoint, 5, [], []);
                     this.house.walls.push(newWall);
+        
+                    if (newPoint === this.hoveredElement) {
+                        this.lastPoint = null;
+                    } else {
+                        this.lastPoint = newPoint;
+                    }
+                    return;
+                },
+                (canvaController=this, lastGhostMode=currentGhostMode, lastLastPoint=currentLastPoint, lastHouse=currentHouse) => {
+                    canvaController.ghostMode = lastGhostMode;
+                    canvaController.lastPoint = lastLastPoint;
+                    canvaController.house = lastHouse;
                 }
-            }
-
-            const newWall = new Wall(this.lastPoint, newPoint, 5, [], []);
-            this.house.walls.push(newWall);
-
-            if (newPoint === this.hoveredElement) {
-                this.lastPoint = null;
-            } else {
-                this.lastPoint = newPoint;
-            }
-            return;
+            )
+            command.doFnc();
+            this.commands.push(command);
+            
         } else {
             if (this.hoveredElement !== null && this.hoveredElement instanceof Point) { // the new point is an existing point
-                this.lastPoint = this.hoveredElement;
-                this.ghostMode = true;
+                const command = new Command(
+                    (canvaController) => {
+                        canvaController.lastPoint = canvaController.hoveredElement;
+                        canvaController.ghostMode = true;
+                    },
+                    (canvaController=this, currentLastPoint=this.lastPoint, currentGhostMode=this.ghostMode) => {
+                        canvaController.lastPoint = currentLastPoint;
+                        canvaController.ghostMode = currentGhostMode;
+                    }
+                )
+                command.doFnc();
+                this.commands.push(command);
                 return;
             }
-            this.lastPoint = new Point(x, y);
+            const command = new Command(
+                (canvaController=this) => {
+                    canvaController.lastPoint = new Point(x, y);
+                },
+                (canvasController=this, currentLastPoint=this.lastPoint) => {
+                    canvasController.lastPoint = currentLastPoint;
+                }
+            );
+            command.doFnc();
+            this.commands.push(command);
         }
         this.ghostMode = true;
     }
@@ -215,6 +267,7 @@ class CanvasController {
         }
 
         hoverableElement.drawHover(this.context);
+        
         if (hoverableElement instanceof Point) {
             
         }
