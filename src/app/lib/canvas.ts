@@ -123,7 +123,7 @@ class CanvasController {
                             wall.points[1]
                         );
         
-                        if (intersection !== null) {
+                        if (intersection !== null && canvaController.lastPoint.id !== intersection.id) {
                             const newWall = new Wall(canvaController.lastPoint, intersection, 5, [], []);
                             this.lastPoint = intersection;
                             this.house.walls.push(newWall);
@@ -266,7 +266,6 @@ class CanvasController {
             return;
         }
 
-        console.log(hoverableElement)
         hoverableElement.drawHover(this.context);
         
         if (hoverableElement instanceof Point) {
