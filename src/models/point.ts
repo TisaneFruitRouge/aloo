@@ -17,6 +17,11 @@ class Point {
         context.strokeRect(strokeX - WIDTH / 2, strokeY - HEIGHT / 2, WIDTH + 4, HEIGHT + 4);
     }
 
+    public draw(context: CanvasRenderingContext2D) {
+        context.fillStyle = 'black';
+        context.fillRect(this.x - WIDTH / 2, this.y - HEIGHT / 2, WIDTH, WIDTH);
+    }
+
     public toString() {
         return `x: ${this.x} | y: ${this.y}`;
     }

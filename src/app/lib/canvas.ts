@@ -5,7 +5,7 @@ import Wall from "../../models/wall";
 import Command from "./command";
 import { HEIGHT, HOVERING_DISTANCE, WIDTH } from "./constants";
 import { findIntersectionPoint, getDistance, getDistanceFromLine } from "./geomerty";
-import { copyInstanceOfClass } from "./utils";
+import { copyInstanceOfClass, drawLine } from "./utils";
 
 export enum Tools {
     Draw,
@@ -54,17 +54,21 @@ class CanvasController {
         this.updateCanva();
     }
 
+    public redo() {
+
+    }
+
     public updateCanva() {
         this.context.clearRect(0, 0, this.width, this.height);
 
         // drawing last point
         if (this.lastPoint !== null) {
-            this.drawPoint(this.lastPoint.x, this.lastPoint.y);
+            this.lastPoint.draw(this.context);
         }
 
         // drawing the walls
         for (const wall of this.house.walls) {
-            this.drawWall(wall);
+            wall.draw(this.context);
         }
 
         // draw ghost line if necessary
@@ -209,6 +213,8 @@ class CanvasController {
 
     public removeAll() {
         this.house.walls = [];
+        this.lastPoint = null;
+        this.ghostMode = false;
         this.updateCanva();
     }
 
@@ -216,12 +222,6 @@ class CanvasController {
         this.currentTool = tool;
         this.lastPoint = null;
         this.ghostMode = false;
-    }
-
-    private drawPoint(x:number, y:number) {
-        this.context.fillStyle = 'black';
-
-        this.context.fillRect(x - WIDTH / 2, y - HEIGHT / 2, WIDTH, WIDTH);
     }
 
     public drawGhostelement(mouseX: number, mouseY: number) {
@@ -234,29 +234,10 @@ class CanvasController {
         }
 
         this.context.fillStyle = 'green';
-        this.drawLine(mouseX, mouseY, this.lastPoint.x, this.lastPoint.y)
-    }
 
-    private drawLine(sX: number, sY: number, eX: number, eY: number) {
-        // Start a new Path
-        this.context.beginPath();
-        this.context.moveTo(sX, sY);
-        this.context.lineTo(eX, eY);
+        const mousePoint = new Point(mouseX, mouseY);
 
-        // Draw the Path
-        this.context.stroke();  
-    }
-
-    private drawWall(wall: Wall) {
-        this.context.fillStyle = 'black';
-        this.drawPoint(wall.points[0].x, wall.points[0].y);
-        this.drawPoint(wall.points[1].x, wall.points[1].y);
-        this.drawLine(
-            wall.points[0].x, 
-            wall.points[0].y,
-            wall.points[1].x, 
-            wall.points[1].y
-        );
+        drawLine(this.context, mousePoint, this.lastPoint)
     }
 
     private hoverOnElement(x: number, y: number) {
@@ -267,10 +248,6 @@ class CanvasController {
         }
 
         hoverableElement.drawHover(this.context);
-        
-        if (hoverableElement instanceof Point) {
-            
-        }
     }
 
     private getHoverableElement (x: number, y: number) {
