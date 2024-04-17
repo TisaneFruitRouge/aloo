@@ -1,3 +1,6 @@
+import Point from "../../models/point";
+import { WIDTH } from "./constants";
+
 function copyInstanceOfClass(obj: any) {
     const clone = Object.create(Object.getPrototypeOf(obj));
 
@@ -18,4 +21,21 @@ function copyInstanceOfClass(obj: any) {
     return clone;
 }
 
-export { copyInstanceOfClass }
+function drawLine(context: CanvasRenderingContext2D, startPoint: Point, endPoint: Point) {
+    
+    // Start a new Path
+    context.save();
+
+    context.beginPath();
+    context.moveTo(startPoint.x, startPoint.y);
+    context.lineTo(endPoint.x, endPoint.y);
+
+    context.lineWidth = WIDTH;
+
+    // Draw the Path
+    context.stroke();  
+
+    context.restore();
+}
+
+export { copyInstanceOfClass, drawLine }

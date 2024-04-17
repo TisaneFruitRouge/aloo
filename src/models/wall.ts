@@ -1,6 +1,7 @@
 import BaseObject from "./object";
 import Point from "./point";
 import { WallWindow, Door } from "./opening";
+import { drawLine } from "../app/lib/utils";
 
 class Wall extends BaseObject {
     public doors: Array<Door>;
@@ -18,14 +19,20 @@ class Wall extends BaseObject {
         this.windows = windows;
     }
 
-    public drawHover(context: CanvasRenderingContext2D) {
-        // context.beginPath();
+    public draw(context: CanvasRenderingContext2D) {
         
-        // context.moveTo(sX, sY);
-        // context.lineTo(eX, eY);
+        context.save();
 
-        // // Draw the Path
-        // this.context.stroke();  
+        context.fillStyle = this.isHovered ? 'gray' : 'black';
+        this.points[0].draw(context);
+        this.points[1].draw(context);
+        drawLine(context, this.points[0], this.points[1]);
+
+        context.restore();
+    }
+
+    public drawHover(context: CanvasRenderingContext2D) {
+        // for walls, the drawHover is just a color change
     }
 }
 

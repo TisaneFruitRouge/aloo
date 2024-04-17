@@ -4,6 +4,7 @@ class Point {
     public x: number;
     public y: number;
     public id = crypto.randomUUID();
+    public isHovered = false;
 
     public constructor(x: number, y:number) {
         this.x = x;
@@ -15,6 +16,11 @@ class Point {
         const strokeY = this.y - 2;
 
         context.strokeRect(strokeX - WIDTH / 2, strokeY - HEIGHT / 2, WIDTH + 4, HEIGHT + 4);
+    }
+
+    public draw(context: CanvasRenderingContext2D) {
+        context.fillStyle = 'black';
+        context.fillRect(this.x - WIDTH / 2, this.y - HEIGHT / 2, WIDTH, WIDTH);
     }
 
     public toString() {

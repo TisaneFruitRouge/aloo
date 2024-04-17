@@ -3,9 +3,9 @@ import { Door, WallWindow } from "../../models/opening";
 import Point from "../../models/point";
 import Wall from "../../models/wall";
 import Command from "./command";
-import { HEIGHT, HOVERING_DISTANCE, WIDTH } from "./constants";
+import { HOVERING_DISTANCE } from "./constants";
 import { findIntersectionPoint, getDistance, getDistanceFromLine } from "./geomerty";
-import { copyInstanceOfClass } from "./utils";
+import { copyInstanceOfClass, drawLine } from "./utils";
 
 export enum Tools {
     Draw,
@@ -21,6 +21,8 @@ class CanvasController {
     private height: number;
     private ghostMode: boolean = false;
 
+    private shiftPressed = false;
+
     private house: House;
     private lastPoint: Point | null = null;
 
@@ -33,12 +35,46 @@ class CanvasController {
 
     private commands:Array<Command> = [];
 
+    private spacing = 100;
+
     public constructor(context: CanvasRenderingContext2D, width: number, height: number) {
         this.context = context;
         this.width = width;
         this.height = height;
 
         this.house = new House(new Array<Wall>());
+    }
+
+    public setShift(state: boolean) {
+        this.shiftPressed = state;
+    }
+
+    private drawGrid() {
+
+        // Save the current context state
+        this.context.save();
+
+
+        this.context.beginPath();
+        this.context.setLineDash([5, 5]); // Set the line dash pattern for dotted lines
+        this.context.strokeStyle = 'gray';
+
+        // Vertical lines
+        for (let x = 0; x <= this.width; x += this.spacing) {
+            this.context.moveTo(x, 0);
+            this.context.lineTo(x, this.height);
+        }
+
+        // Horizontal lines
+        for (let y = 0; y <= this.height; y += this.spacing) {
+            this.context.moveTo(0, y);
+            this.context.lineTo(this.width, y);
+        }
+
+        this.context.stroke();
+
+        // Restore the context to its default state
+        this.context.restore();
     }
 
     public undo() {
@@ -54,17 +90,24 @@ class CanvasController {
         this.updateCanva();
     }
 
+    public redo() {
+
+    }
+
     public updateCanva() {
         this.context.clearRect(0, 0, this.width, this.height);
 
+        this.drawGrid();
+
         // drawing last point
         if (this.lastPoint !== null) {
-            this.drawPoint(this.lastPoint.x, this.lastPoint.y);
+            this.lastPoint.draw(this.context);
         }
 
         // drawing the walls
         for (const wall of this.house.walls) {
-            this.drawWall(wall);
+            wall.draw(this.context);
+            wall.isHovered = false;
         }
 
         // draw ghost line if necessary
@@ -113,6 +156,11 @@ class CanvasController {
                         this.ghostMode = false;
                     } else { // creating a new point
                         newPoint = new Point(x, y);
+                        
+                        if (this.shiftPressed && this.lastPoint !== null) {
+                            const al = determineAlignment(newPoint, this.lastPoint)
+                            newPoint = createAlignedPoints(newPoint, this.lastPoint, al)[0]
+                        }
                     }
                     
                     for (const wall of this.house.walls) {
@@ -190,13 +238,26 @@ class CanvasController {
     private clickWithRemove(x: number, y: number) {
         if (this.hoveredElement !== null) {
             if (this.hoveredElement instanceof Point) {
-                let preservedWalls = [];
-                for (const [index, wall] of this.house.walls.entries()) {
-                    if (this.hoveredElement.id !== wall.points[0].id && this.hoveredElement.id !== wall.points[1].id) {
-                        preservedWalls.push(wall)
+                const currentHouse = copyInstanceOfClass(this.house);
+                const command = new Command(
+                    (canvaController=this) => {
+                        let preservedWalls = [];
+                        for (const [index, wall] of this.house.walls.entries()) {
+                            if (
+                                canvaController.hoveredElement.id !== wall.points[0].id && 
+                                canvaController.hoveredElement.id !== wall.points[1].id
+                            ) {
+                                preservedWalls.push(wall)
+                            }
+                            canvaController.house.walls = preservedWalls;
+                        }
+                    },
+                    (canvaController=this, lastHouse=currentHouse) => {
+                        canvaController.house = lastHouse;
                     }
-                    this.house.walls = preservedWalls;
-                }
+                )
+                command.doFnc();
+                this.commands.push(command);
             } else if (this.hoveredElement instanceof Wall) {
 
             } else if (this.hoveredElement instanceof Door) {
@@ -209,6 +270,8 @@ class CanvasController {
 
     public removeAll() {
         this.house.walls = [];
+        this.lastPoint = null;
+        this.ghostMode = false;
         this.updateCanva();
     }
 
@@ -216,12 +279,6 @@ class CanvasController {
         this.currentTool = tool;
         this.lastPoint = null;
         this.ghostMode = false;
-    }
-
-    private drawPoint(x:number, y:number) {
-        this.context.fillStyle = 'black';
-
-        this.context.fillRect(x - WIDTH / 2, y - HEIGHT / 2, WIDTH, WIDTH);
     }
 
     public drawGhostelement(mouseX: number, mouseY: number) {
@@ -234,43 +291,33 @@ class CanvasController {
         }
 
         this.context.fillStyle = 'green';
-        this.drawLine(mouseX, mouseY, this.lastPoint.x, this.lastPoint.y)
-    }
 
-    private drawLine(sX: number, sY: number, eX: number, eY: number) {
-        // Start a new Path
-        this.context.beginPath();
-        this.context.moveTo(sX, sY);
-        this.context.lineTo(eX, eY);
+        const mousePoint = new Point(mouseX, mouseY);
+        
+        let point = mousePoint
 
-        // Draw the Path
-        this.context.stroke();  
-    }
+        if (this.shiftPressed) {
+            const al = determineAlignment(mousePoint, this.lastPoint)
+            point = createAlignedPoints(mousePoint, this.lastPoint, al)[0]
+        }
 
-    private drawWall(wall: Wall) {
-        this.context.fillStyle = 'black';
-        this.drawPoint(wall.points[0].x, wall.points[0].y);
-        this.drawPoint(wall.points[1].x, wall.points[1].y);
-        this.drawLine(
-            wall.points[0].x, 
-            wall.points[0].y,
-            wall.points[1].x, 
-            wall.points[1].y
-        );
+        drawLine(this.context, point, this.lastPoint);
     }
 
     private hoverOnElement(x: number, y: number) {
+
         const hoverableElement = this.getHoverableElement(x, y);
 
         if (hoverableElement === null) {
             return;
         }
 
-        hoverableElement.drawHover(this.context);
-        
-        if (hoverableElement instanceof Point) {
-            
+        if (hoverableElement instanceof Wall) {
+            hoverableElement
         }
+
+        hoverableElement.isHovered = true;
+        hoverableElement.drawHover(this.context);
     }
 
     private getHoverableElement (x: number, y: number) {
@@ -305,6 +352,35 @@ class CanvasController {
             return null;
         }
     }
+}
+
+function determineAlignment(mousePoint: Point, lastPoint:Point) {
+    
+    // Calculate the absolute differences in x and y coordinates
+    const dx = Math.abs(mousePoint.x - lastPoint.x);
+    const dy = Math.abs(mousePoint.y - lastPoint.y);
+    
+    // Determine alignment based on which difference is greater
+    if (dx < dy) {
+        return 'horizontal';
+    } else {
+        return 'vertical';
+    }
+}
+
+// Function to create two points aligned either vertically or horizontally
+function createAlignedPoints(mousePoint:Point, lastPoint:Point, alignment: string) {
+    let point1, point2;
+    if (alignment === 'vertical') {
+        point1 = new Point(mousePoint.x, lastPoint.y);
+        point2 = new Point(mousePoint.x, mousePoint.y); 
+    } else if (alignment === 'horizontal') {
+        point1 = new Point(lastPoint.x, mousePoint.y);
+        point2 = new Point(mousePoint.x, mousePoint.y); 
+    } else {
+        throw new Error('Invalid alignment specified. Please use "vertical" or "horizontal".');
+    }
+    return [point1, point2];
 }
 
 export default CanvasController;
