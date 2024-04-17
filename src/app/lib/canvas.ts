@@ -33,12 +33,42 @@ class CanvasController {
 
     private commands:Array<Command> = [];
 
+    private spacing = 100;
+
     public constructor(context: CanvasRenderingContext2D, width: number, height: number) {
         this.context = context;
         this.width = width;
         this.height = height;
 
         this.house = new House(new Array<Wall>());
+    }
+
+    private drawGrid() {
+
+        // Save the current context state
+        this.context.save();
+
+
+        this.context.beginPath();
+        this.context.setLineDash([5, 5]); // Set the line dash pattern for dotted lines
+        this.context.strokeStyle = 'gray';
+
+        // Vertical lines
+        for (let x = 0; x <= this.width; x += this.spacing) {
+            this.context.moveTo(x, 0);
+            this.context.lineTo(x, this.height);
+        }
+
+        // Horizontal lines
+        for (let y = 0; y <= this.height; y += this.spacing) {
+            this.context.moveTo(0, y);
+            this.context.lineTo(this.width, y);
+        }
+
+        this.context.stroke();
+
+        // Restore the context to its default state
+        this.context.restore();
     }
 
     public undo() {
@@ -61,6 +91,8 @@ class CanvasController {
     public updateCanva() {
         this.context.clearRect(0, 0, this.width, this.height);
 
+        this.drawGrid();
+
         // drawing last point
         if (this.lastPoint !== null) {
             this.lastPoint.draw(this.context);
@@ -69,6 +101,7 @@ class CanvasController {
         // drawing the walls
         for (const wall of this.house.walls) {
             wall.draw(this.context);
+            wall.isHovered = false;
         }
 
         // draw ghost line if necessary
@@ -194,13 +227,26 @@ class CanvasController {
     private clickWithRemove(x: number, y: number) {
         if (this.hoveredElement !== null) {
             if (this.hoveredElement instanceof Point) {
-                let preservedWalls = [];
-                for (const [index, wall] of this.house.walls.entries()) {
-                    if (this.hoveredElement.id !== wall.points[0].id && this.hoveredElement.id !== wall.points[1].id) {
-                        preservedWalls.push(wall)
+                const currentHouse = copyInstanceOfClass(this.house);
+                const command = new Command(
+                    (canvaController=this) => {
+                        let preservedWalls = [];
+                        for (const [index, wall] of this.house.walls.entries()) {
+                            if (
+                                canvaController.hoveredElement.id !== wall.points[0].id && 
+                                canvaController.hoveredElement.id !== wall.points[1].id
+                            ) {
+                                preservedWalls.push(wall)
+                            }
+                            canvaController.house.walls = preservedWalls;
+                        }
+                    },
+                    (canvaController=this, lastHouse=currentHouse) => {
+                        canvaController.house = lastHouse;
                     }
-                    this.house.walls = preservedWalls;
-                }
+                )
+                command.doFnc();
+                this.commands.push(command);
             } else if (this.hoveredElement instanceof Wall) {
 
             } else if (this.hoveredElement instanceof Door) {
@@ -241,12 +287,18 @@ class CanvasController {
     }
 
     private hoverOnElement(x: number, y: number) {
+
         const hoverableElement = this.getHoverableElement(x, y);
 
         if (hoverableElement === null) {
             return;
         }
 
+        if (hoverableElement instanceof Wall) {
+            hoverableElement
+        }
+
+        hoverableElement.isHovered = true;
         hoverableElement.drawHover(this.context);
     }
 

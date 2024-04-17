@@ -20,20 +20,19 @@ class Wall extends BaseObject {
     }
 
     public draw(context: CanvasRenderingContext2D) {
-        context.fillStyle = 'black';
+        
+        context.save();
+
+        context.fillStyle = this.isHovered ? 'gray' : 'black';
         this.points[0].draw(context);
         this.points[1].draw(context);
-        drawLine(context, this.points[0], this.points[1])
+        drawLine(context, this.points[0], this.points[1]);
+
+        context.restore();
     }
 
     public drawHover(context: CanvasRenderingContext2D) {
-        // context.beginPath();
-        
-        // context.moveTo(sX, sY);
-        // context.lineTo(eX, eY);
-
-        // // Draw the Path
-        // this.context.stroke();  
+        // for walls, the drawHover is just a color change
     }
 }
 
