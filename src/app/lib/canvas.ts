@@ -3,7 +3,7 @@ import { Door, WallWindow } from "../../models/opening";
 import Point from "../../models/point";
 import Wall from "../../models/wall";
 import Command from "./command";
-import { HEIGHT, HOVERING_DISTANCE, WIDTH } from "./constants";
+import { HOVERING_DISTANCE } from "./constants";
 import { findIntersectionPoint, getDistance, getDistanceFromLine } from "./geomerty";
 import { copyInstanceOfClass, drawLine } from "./utils";
 
@@ -20,6 +20,8 @@ class CanvasController {
     private width: number;
     private height: number;
     private ghostMode: boolean = false;
+
+    private shiftPressed = false;
 
     private house: House;
     private lastPoint: Point | null = null;
@@ -41,6 +43,10 @@ class CanvasController {
         this.height = height;
 
         this.house = new House(new Array<Wall>());
+    }
+
+    public setShift(state: boolean) {
+        this.shiftPressed = state;
     }
 
     private drawGrid() {
@@ -150,6 +156,11 @@ class CanvasController {
                         this.ghostMode = false;
                     } else { // creating a new point
                         newPoint = new Point(x, y);
+                        
+                        if (this.shiftPressed && this.lastPoint !== null) {
+                            const al = determineAlignment(newPoint, this.lastPoint)
+                            newPoint = createAlignedPoints(newPoint, this.lastPoint, al)[0]
+                        }
                     }
                     
                     for (const wall of this.house.walls) {
@@ -282,8 +293,15 @@ class CanvasController {
         this.context.fillStyle = 'green';
 
         const mousePoint = new Point(mouseX, mouseY);
+        
+        let point = mousePoint
 
-        drawLine(this.context, mousePoint, this.lastPoint)
+        if (this.shiftPressed) {
+            const al = determineAlignment(mousePoint, this.lastPoint)
+            point = createAlignedPoints(mousePoint, this.lastPoint, al)[0]
+        }
+
+        drawLine(this.context, point, this.lastPoint);
     }
 
     private hoverOnElement(x: number, y: number) {
@@ -334,6 +352,35 @@ class CanvasController {
             return null;
         }
     }
+}
+
+function determineAlignment(mousePoint: Point, lastPoint:Point) {
+    
+    // Calculate the absolute differences in x and y coordinates
+    const dx = Math.abs(mousePoint.x - lastPoint.x);
+    const dy = Math.abs(mousePoint.y - lastPoint.y);
+    
+    // Determine alignment based on which difference is greater
+    if (dx < dy) {
+        return 'horizontal';
+    } else {
+        return 'vertical';
+    }
+}
+
+// Function to create two points aligned either vertically or horizontally
+function createAlignedPoints(mousePoint:Point, lastPoint:Point, alignment: string) {
+    let point1, point2;
+    if (alignment === 'vertical') {
+        point1 = new Point(mousePoint.x, lastPoint.y);
+        point2 = new Point(mousePoint.x, mousePoint.y); 
+    } else if (alignment === 'horizontal') {
+        point1 = new Point(lastPoint.x, mousePoint.y);
+        point2 = new Point(mousePoint.x, mousePoint.y); 
+    } else {
+        throw new Error('Invalid alignment specified. Please use "vertical" or "horizontal".');
+    }
+    return [point1, point2];
 }
 
 export default CanvasController;
