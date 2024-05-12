@@ -19,6 +19,7 @@ export enum Tools {
 class CanvasController {
     private backgroundContext: CanvasRenderingContext2D;
     private interactiveContext: CanvasRenderingContext2D;
+    private staticContext: CanvasRenderingContext2D;
     private width: number;
     private height: number;
     private ghostMode: boolean = false;
@@ -39,9 +40,12 @@ class CanvasController {
 
     private spacing = 100;
 
-    public constructor(backgroundContext: CanvasRenderingContext2D, interactiveContext:CanvasRenderingContext2D, width: number, height: number) {
+    public constructor(backgroundContext: CanvasRenderingContext2D, interactiveContext:CanvasRenderingContext2D,
+        staticContext:CanvasRenderingContext2D, width: number, height: number) {
+            
         this.backgroundContext = backgroundContext;
         this.interactiveContext = interactiveContext;
+        this.staticContext = staticContext;
         this.width = width;
         this.height = height;
 
@@ -58,7 +62,6 @@ class CanvasController {
 
         // Save the current context state
         this.backgroundContext.save();
-
 
         this.backgroundContext.beginPath();
         this.backgroundContext.setLineDash([5, 5]); // Set the line dash pattern for dotted lines
@@ -93,27 +96,34 @@ class CanvasController {
         lastCommand.undoFnc();
         this.commands.pop();
         this.updateCanva();
+        this.updateCanvaWalls();
+        this.updateCanvaLastPoint();
     }
 
     public redo() {
 
     }
 
-    public updateCanva() {
-        this.interactiveContext.clearRect(0, 0, this.width, this.height);
-
-        // this.drawGrid();
-
-        // drawing last point
-        if (this.lastPoint !== null) {
-            this.lastPoint.draw(this.interactiveContext);
-        }
-
+    public updateCanvaWalls()
+    {
+        // this.staticContext.clearRect(0, 0, this.width, this.height);
         // drawing the walls
         for (const wall of this.house.walls) {
-            wall.draw(this.interactiveContext);
+            wall.draw(this.staticContext);
             wall.setHoveredState(false);
         }
+    }
+
+    public updateCanvaLastPoint() {
+        this.staticContext.clearRect(0, 0, this.width, this.height);
+        // drawing last point
+        if (this.lastPoint !== null) {
+            this.lastPoint.draw(this.staticContext);
+        }
+    }
+
+    public updateCanva() {
+        this.interactiveContext.clearRect(0, 0, this.width, this.height);
 
         // draw ghost line if necessary
         if (this.ghostMode) {
@@ -278,6 +288,8 @@ class CanvasController {
         this.lastPoint = null;
         this.ghostMode = false;
         this.updateCanva();
+        this.updateCanvaWalls();
+        this.updateCanvaLastPoint();
     }
 
     public setCurrentTool(tool: Tools) {
@@ -296,7 +308,7 @@ class CanvasController {
         }
 
         this.interactiveContext.fillStyle = 'green';
-
+        
         const mousePoint = new Point(mouseX, mouseY);
         
         let point = mousePoint
