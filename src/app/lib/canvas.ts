@@ -1,7 +1,8 @@
-import House from "../../models/house";
-import { Door, WallWindow } from "../../models/opening";
-import Point from "../../models/point";
-import Wall from "../../models/wall";
+import House from "../../elements/house";
+import { Window } from "../../elements/window";
+import { Door } from "../../elements/door";
+import { Point } from "../../elements/point";
+import { Wall } from "../../elements/wall";
 import Command from "./command";
 import { HOVERING_DISTANCE } from "./constants";
 import { findIntersectionPoint, getDistance, getDistanceFromLine } from "./geomerty";
@@ -31,7 +32,7 @@ class CanvasController {
     public mouseX = 0;
     public mouseY = 0;
 
-    private hoveredElement: Point | Wall | Door | WallWindow | null = null;
+    private hoveredElement: Point | Wall | Door | Window | null = null;
 
     private commands:Array<Command> = [];
 
@@ -107,7 +108,7 @@ class CanvasController {
         // drawing the walls
         for (const wall of this.house.walls) {
             wall.draw(this.context);
-            wall.isHovered = false;
+            wall.setHoveredState(false);
         }
 
         // draw ghost line if necessary
@@ -167,18 +168,18 @@ class CanvasController {
                         let intersection = findIntersectionPoint( // finding the intersection
                         canvaController.lastPoint,
                             newPoint,
-                            wall.points[0],
-                            wall.points[1]
+                            wall.getSegment()[0],
+                            wall.getSegment()[1]
                         );
         
-                        if (intersection !== null && canvaController.lastPoint.id !== intersection.id) {
-                            const newWall = new Wall(canvaController.lastPoint, intersection, 5, [], []);
+                        if (intersection !== null && canvaController.lastPoint.id !== intersection.getId()) {
+                            const newWall = new Wall(canvaController.lastPoint, newPoint, "basic", "#FFFFFF");
                             this.lastPoint = intersection;
                             this.house.walls.push(newWall);
                         }
                     }
         
-                    const newWall = new Wall(canvaController.lastPoint, newPoint, 5, [], []);
+                    const newWall = new Wall(canvaController.lastPoint, newPoint, "basic", "#FFFFFF");
                     this.house.walls.push(newWall);
         
                     if (newPoint === this.hoveredElement) {
@@ -244,8 +245,8 @@ class CanvasController {
                         let preservedWalls = [];
                         for (const [index, wall] of this.house.walls.entries()) {
                             if (
-                                canvaController.hoveredElement.id !== wall.points[0].id && 
-                                canvaController.hoveredElement.id !== wall.points[1].id
+                                canvaController.hoveredElement.id !== wall.getSegment()[0].getId() && 
+                                canvaController.hoveredElement.id !== wall.getSegment()[1].getId()
                             ) {
                                 preservedWalls.push(wall)
                             }
@@ -262,7 +263,7 @@ class CanvasController {
 
             } else if (this.hoveredElement instanceof Door) {
 
-            } else if (this.hoveredElement instanceof WallWindow) {
+            } else if (this.hoveredElement instanceof Window) {
 
             }
         }
@@ -316,7 +317,7 @@ class CanvasController {
             hoverableElement
         }
 
-        hoverableElement.isHovered = true;
+        hoverableElement.setHoveredState(true);
         hoverableElement.drawHover(this.context);
     }
 
@@ -324,8 +325,8 @@ class CanvasController {
         let lastDist = -1;
 
         for (const wall of this.house.walls) {
-            for (const point of wall.points) {
-                let dist = getDistance(x, y, point.x, point.y);
+            for (const point of wall.getSegment()) {
+                let dist = getDistance(x, y, point.getX(), point.getY());
                 if (lastDist < 0 || dist < lastDist) {
                     lastDist = dist;
                     this.hoveredElement = point;
@@ -334,10 +335,10 @@ class CanvasController {
             let wallDist = getDistanceFromLine(
                 x, 
                 y, 
-                wall.points[0].x,
-                wall.points[0].y,
-                wall.points[1].x,
-                wall.points[1].y
+                wall.getSegment()[0].getX(),
+                wall.getSegment()[0].getY(),
+                wall.getSegment()[1].getX(),
+                wall.getSegment()[1].getY()
             )
             if (wallDist < lastDist) {
                 lastDist = wallDist;
@@ -357,8 +358,8 @@ class CanvasController {
 function determineAlignment(mousePoint: Point, lastPoint:Point) {
     
     // Calculate the absolute differences in x and y coordinates
-    const dx = Math.abs(mousePoint.x - lastPoint.x);
-    const dy = Math.abs(mousePoint.y - lastPoint.y);
+    const dx = Math.abs(mousePoint.getX() - lastPoint.getX());
+    const dy = Math.abs(mousePoint.getY() - lastPoint.getY());
     
     // Determine alignment based on which difference is greater
     if (dx < dy) {
@@ -372,11 +373,11 @@ function determineAlignment(mousePoint: Point, lastPoint:Point) {
 function createAlignedPoints(mousePoint:Point, lastPoint:Point, alignment: string) {
     let point1, point2;
     if (alignment === 'vertical') {
-        point1 = new Point(mousePoint.x, lastPoint.y);
-        point2 = new Point(mousePoint.x, mousePoint.y); 
+        point1 = new Point(mousePoint.getX(), lastPoint.getY());
+        point2 = new Point(mousePoint.getX(), mousePoint.getY()); 
     } else if (alignment === 'horizontal') {
-        point1 = new Point(lastPoint.x, mousePoint.y);
-        point2 = new Point(mousePoint.x, mousePoint.y); 
+        point1 = new Point(lastPoint.getX(), mousePoint.getY());
+        point2 = new Point(mousePoint.getX(), mousePoint.getY()); 
     } else {
         throw new Error('Invalid alignment specified. Please use "vertical" or "horizontal".');
     }

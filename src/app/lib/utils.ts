@@ -1,4 +1,4 @@
-import Point from "../../models/point";
+import { Point } from "../../elements/point";
 import { WIDTH } from "./constants";
 
 function copyInstanceOfClass(obj: any) {
@@ -27,8 +27,8 @@ function drawLine(context: CanvasRenderingContext2D, startPoint: Point, endPoint
     context.save();
 
     context.beginPath();
-    context.moveTo(startPoint.x, startPoint.y);
-    context.lineTo(endPoint.x, endPoint.y);
+    context.moveTo(startPoint.getX(), startPoint.getY());
+    context.lineTo(endPoint.getX(), endPoint.getY());
 
     context.lineWidth = WIDTH;
 
