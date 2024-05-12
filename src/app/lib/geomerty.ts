@@ -1,4 +1,4 @@
-import Point from "../../models/point";
+import { Point } from "../../elements/point";
 
 
 export const getDistance = (x1: number, y1: number, x2: number, y2: number) => {
@@ -46,10 +46,10 @@ export function getDistanceFromLine(x:number, y:number, x1:number, y1:number, x2
 
 // Function to find the point of intersection of two line segments
 export function findIntersectionPoint(p1: Point, p2: Point, p3: Point, p4: Point): Point | null {
-  const x1 = p1.x, y1 = p1.y;
-  const x2 = p2.x, y2 = p2.y;
-  const x3 = p3.x, y3 = p3.y;
-  const x4 = p4.x, y4 = p4.y;
+  const x1 = p1.getX(), y1 = p1.getY();
+  const x2 = p2.getX(), y2 = p2.getY();
+  const x3 = p3.getX(), y3 = p3.getY();
+  const x4 = p4.getX(), y4 = p4.getY();
 
   const ua_numerator = (x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3);
   const ua_denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
