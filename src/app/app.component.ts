@@ -24,13 +24,29 @@ export class AppComponent implements AfterViewInit {
   public canvasController!: CanvasController;
 
   ngAfterViewInit(): void {
-    const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-    if (canvas !== null) {
-      let context = canvas.getContext('2d') as CanvasRenderingContext2D;
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+    const gridCanvas = document.getElementById("gridCanvas") as HTMLCanvasElement | null;
+    const interactiveCanvas = document.getElementById("interactiveCanvas") as HTMLCanvasElement | null;
+    const staticCanvas = document.getElementById("staticCanvas") as HTMLCanvasElement | null;
 
-      this.canvasController = new CanvasController(context, window.innerWidth, window.innerHeight);
+    if (gridCanvas && interactiveCanvas && staticCanvas) {
+      const gridContext = gridCanvas.getContext('2d');
+      const interactiveContext = interactiveCanvas.getContext('2d');
+      const staticContext = staticCanvas.getContext('2d');
+
+      if (gridContext && interactiveContext && staticContext) {
+        gridCanvas.width = window.innerWidth;
+        gridCanvas.height = window.innerHeight;
+        interactiveCanvas.width = window.innerWidth;
+        interactiveCanvas.height = window.innerHeight;
+        staticCanvas.width = window.innerWidth;
+        staticCanvas.height = window.innerHeight;
+
+        this.canvasController = new CanvasController(gridContext, interactiveContext, staticContext, window.innerWidth, window.innerHeight);
+      } else {
+        console.error('Failed to get drawing context for the canvases');
+      }
+    } else {
+      console.error('Failed to find canvas elements');
     }
   }
 }

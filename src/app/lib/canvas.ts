@@ -8,6 +8,10 @@ import { HOVERING_DISTANCE } from "./constants";
 import { findIntersectionPoint, getDistance, getDistanceFromLine } from "./geomerty";
 import { copyInstanceOfClass, drawLine } from "./utils";
 
+/**
+ * Enum for the different tools available in the application
+ * (Toolbar at the top of the canvas)
+ */
 export enum Tools {
     Draw,
     Door,
@@ -16,68 +20,107 @@ export enum Tools {
     RemoveAll
 }
 
+/**
+ * Class to control the canvas and the elements drawn on it
+ */
 class CanvasController {
-    private context: CanvasRenderingContext2D;
+
+    // The three different contexts for the canvas to improve performance
+    // Background context is used for the static points and lines
+    private backgroundContext: CanvasRenderingContext2D;
+
+    // Interactive context is used for the dynamic points and lines
+    private interactiveContext: CanvasRenderingContext2D;
+
+    // Static context is used for the grid
+    private staticContext: CanvasRenderingContext2D;
+
     private width: number;
     private height: number;
+
+    // Ghost mode is used to draw a temporary line that is not yet confirmed
     private ghostMode: boolean = false;
 
+    // Is the shift key pressed or not (used for alignment of lines horizontally or vertically)
     private shiftPressed = false;
 
+    // The house object that contains all the elements drawn on the canvas
     private house: House;
+
+    // The last point that was placed on the canvas
     private lastPoint: Point | null = null;
 
+    // The tool that is currently selected
     private currentTool: Tools = Tools.Draw;
 
+    // The mouse position on the canvas
     public mouseX = 0;
     public mouseY = 0;
 
+    // The element that is currently hovered by the mouse
     private hoveredElement: Point | Wall | Door | Window | null = null;
 
+    // Array of commands that have been executed
     private commands:Array<Command> = [];
 
+    // Grid spacing
     private spacing = 100;
 
-    public constructor(context: CanvasRenderingContext2D, width: number, height: number) {
-        this.context = context;
+    public constructor(backgroundContext: CanvasRenderingContext2D, interactiveContext:CanvasRenderingContext2D,
+        staticContext:CanvasRenderingContext2D, width: number, height: number) {
+            
+        this.backgroundContext = backgroundContext;
+        this.interactiveContext = interactiveContext;
+        this.staticContext = staticContext;
         this.width = width;
         this.height = height;
 
         this.house = new House(new Array<Wall>());
+
+        this.drawGrid();
     }
 
+    /**
+     * Set the shift key state
+     * @param state State of the shift key (true if pressed, false if not pressed)
+     */
     public setShift(state: boolean) {
         this.shiftPressed = state;
     }
 
+    /**
+     * Draw the grid on the canvas using the given spacing settings
+     */
     private drawGrid() {
 
         // Save the current context state
-        this.context.save();
+        this.backgroundContext.save();
 
-
-        this.context.beginPath();
-        this.context.setLineDash([5, 5]); // Set the line dash pattern for dotted lines
-        this.context.strokeStyle = 'gray';
+        this.backgroundContext.beginPath();
+        this.backgroundContext.setLineDash([5, 5]); // Set the line dash pattern for dotted lines
+        this.backgroundContext.strokeStyle = 'gray';
 
         // Vertical lines
         for (let x = 0; x <= this.width; x += this.spacing) {
-            this.context.moveTo(x, 0);
-            this.context.lineTo(x, this.height);
+            this.backgroundContext.moveTo(x, 0);
+            this.backgroundContext.lineTo(x, this.height);
         }
 
         // Horizontal lines
         for (let y = 0; y <= this.height; y += this.spacing) {
-            this.context.moveTo(0, y);
-            this.context.lineTo(this.width, y);
+            this.backgroundContext.moveTo(0, y);
+            this.backgroundContext.lineTo(this.width, y);
         }
 
-        this.context.stroke();
+        this.backgroundContext.stroke();
 
         // Restore the context to its default state
-        this.context.restore();
+        this.backgroundContext.restore();
     }
 
+    /**
+     * Undo the last command
+     */
     public undo() {
         const size = this.commands.length;
 
@@ -89,27 +132,37 @@ class CanvasController {
         lastCommand.undoFnc();
         this.commands.pop();
         this.updateCanva();
+        this.updateCanvaWalls();
+        this.updateCanvaLastPoint();
     }
 
+    /**
+     * Redo the last command
+     */
     public redo() {
 
     }
 
-    public updateCanva() {
-        this.context.clearRect(0, 0, this.width, this.height);
-
-        this.drawGrid();
-
-        // drawing last point
-        if (this.lastPoint !== null) {
-            this.lastPoint.draw(this.context);
-        }
-
+    public updateCanvaWalls()
+    {
+        // this.staticContext.clearRect(0, 0, this.width, this.height);
         // drawing the walls
         for (const wall of this.house.walls) {
-            wall.draw(this.context);
+            wall.draw(this.staticContext);
             wall.setHoveredState(false);
         }
+    }
+
+    public updateCanvaLastPoint() {
+        this.staticContext.clearRect(0, 0, this.width, this.height);
+        // drawing last point
+        if (this.lastPoint !== null) {
+            this.lastPoint.draw(this.staticContext);
+        }
+    }
+
+    public updateCanva() {
+        this.interactiveContext.clearRect(0, 0, this.width, this.height);
 
         // draw ghost line if necessary
         if (this.ghostMode) {
@@ -141,7 +194,7 @@ class CanvasController {
     }
 
     private clickWithDraw(x: number, y: number) {
-        this.context.fillStyle = 'green';
+        this.interactiveContext.fillStyle = 'green';
 
         if (this.lastPoint !== null) { // creating a wall
             let newPoint: Point;
@@ -269,19 +322,33 @@ class CanvasController {
         }
     }
 
+    /**
+     * Remove all elements from the canvas
+     */
     public removeAll() {
         this.house.walls = [];
         this.lastPoint = null;
         this.ghostMode = false;
         this.updateCanva();
+        this.updateCanvaWalls();
+        this.updateCanvaLastPoint();
     }
 
+    /**
+     * Set the current tool to the specified tool
+     * @param tool Tool to set as the current tool
+     */
     public setCurrentTool(tool: Tools) {
         this.currentTool = tool;
         this.lastPoint = null;
         this.ghostMode = false;
     }
 
+    /**
+     * Draw a temporary line that is not yet confirmed
+     * @param mouseX The x coordinate of the mouse
+     * @param mouseY The y coordinate of the mouse
+     */
     public drawGhostelement(mouseX: number, mouseY: number) {
         if (!this.ghostMode) {
             return;
@@ -291,8 +358,8 @@ class CanvasController {
             return;
         }
 
-        this.context.fillStyle = 'green';
-
+        this.interactiveContext.fillStyle = 'green';
+        
         const mousePoint = new Point(mouseX, mouseY);
         
         let point = mousePoint
@@ -302,7 +369,7 @@ class CanvasController {
             point = createAlignedPoints(mousePoint, this.lastPoint, al)[0]
         }
 
-        drawLine(this.context, point, this.lastPoint);
+        drawLine(this.interactiveContext, point, this.lastPoint);
     }
 
     private hoverOnElement(x: number, y: number) {
@@ -318,7 +385,7 @@ class CanvasController {
         }
 
         hoverableElement.setHoveredState(true);
-        hoverableElement.drawHover(this.context);
+        hoverableElement.drawHover(this.interactiveContext);
     }
 
     private getHoverableElement (x: number, y: number) {
@@ -355,6 +422,12 @@ class CanvasController {
     }
 }
 
+/**
+ * Determine the alignment of two points based on the mouse position
+ * @param mousePoint Point where the mouse is currently located
+ * @param lastPoint  Point where the last point was placed
+ * @returns 'horizontal' if the points are aligned horizontally, 'vertical' if they are aligned vertically
+ */
 function determineAlignment(mousePoint: Point, lastPoint:Point) {
     
     // Calculate the absolute differences in x and y coordinates
@@ -369,7 +442,13 @@ function determineAlignment(mousePoint: Point, lastPoint:Point) {
     }
 }
 
-// Function to create two points aligned either vertically or horizontally
+/**
+ * Function to create two points aligned either vertically or horizontally
+ * @param mousePoint Point where the mouse is currently located
+ * @param lastPoint  Point where the last point was placed
+ * @param alignment  Alignment of the points ('vertical' or 'horizontal')
+ * @returns          An array containing the two points aligned either vertically or horizontally
+ */
 function createAlignedPoints(mousePoint:Point, lastPoint:Point, alignment: string) {
     let point1, point2;
     if (alignment === 'vertical') {
