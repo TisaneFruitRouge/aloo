@@ -24,20 +24,20 @@ export class AppComponent implements AfterViewInit {
   public canvasController!: CanvasController;
 
   ngAfterViewInit(): void {
-    const backgroundCanvas = document.getElementById("backgroundCanvas") as HTMLCanvasElement | null;
+    const gridCanvas = document.getElementById("gridCanvas") as HTMLCanvasElement | null;
     const interactiveCanvas = document.getElementById("interactiveCanvas") as HTMLCanvasElement | null;
 
-    if (backgroundCanvas && interactiveCanvas) {
-      const backgroundContext = backgroundCanvas.getContext('2d');
+    if (gridCanvas && interactiveCanvas) {
+      const gridContext = gridCanvas.getContext('2d');
       const interactiveContext = interactiveCanvas.getContext('2d');
 
-      if (backgroundContext && interactiveContext) {
-        backgroundCanvas.width = window.innerWidth;
-        backgroundCanvas.height = window.innerHeight;
+      if (gridContext && interactiveContext) {
+        gridCanvas.width = window.innerWidth;
+        gridCanvas.height = window.innerHeight;
         interactiveCanvas.width = window.innerWidth;
         interactiveCanvas.height = window.innerHeight;
 
-        this.canvasController = new CanvasController(backgroundContext, interactiveContext, window.innerWidth, window.innerHeight);
+        this.canvasController = new CanvasController(gridContext, interactiveContext, window.innerWidth, window.innerHeight);
       } else {
         console.error('Failed to get drawing context for the canvases');
       }
