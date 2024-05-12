@@ -2,6 +2,8 @@ import { StructuralElement } from "./structural-element";
 import { Point } from "./point";
 import { Door } from "./door";
 import { Window } from "./window";
+import { drawLine } from "../app/lib/utils";
+import { Material } from "./material";
 
 export class Wall extends StructuralElement {
     private doors: Array<Door>;
@@ -40,6 +42,22 @@ export class Wall extends StructuralElement {
 
     removeWindow(window: Window): void {
         this.windows = this.windows.filter(w => w !== window);
+    }
+
+    public draw(context: CanvasRenderingContext2D) {
+        
+        context.save();
+
+        context.fillStyle = this.getHoveredState() ? 'gray' : 'black';
+        this.getSegment()[0].draw(context);
+        this.getSegment()[1].draw(context);
+        drawLine(context, this.getSegment()[0], this.getSegment()[1]);
+
+        context.restore();
+    }
+
+    public drawHover(context: CanvasRenderingContext2D) {
+        // for walls, the drawHover is just a color change
     }
 }
 

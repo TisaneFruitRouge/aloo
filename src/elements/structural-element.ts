@@ -19,24 +19,32 @@ export class StructuralElement {
         return this.segment;
     }
 
-    public getThickness(): number {
+    public getThickness() {
         return this.thickness;
     }
 
-    public getSegmentLength(): number {
+    public getSegmentLength() {
         const [A, B] = this.segment;
         return Math.sqrt(Math.pow(B.getX() - A.getX(), 2) + Math.pow(B.getY() - A.getY(), 2));
     }
 
-    public setSegment(A: Point, B: Point): void {
+    public setSegment(A: Point, B: Point) {
         this.segment = [A, B];
     }
 
-    public setThickness(thickness: number): void {
+    public setThickness(thickness: number) {
         this.thickness = thickness;
     }
 
-    public toggleHoverState(): void {
+    public toggleHoverState() {
         this.isHovered = !this.isHovered;
+    }
+
+    public getHoveredState() {
+        return this.isHovered;
+    }
+
+    public setHoveredState(isHovered: boolean) {
+        this.isHovered = isHovered;
     }
 }

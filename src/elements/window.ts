@@ -1,4 +1,5 @@
 import { InsetElement } from './inset-element';
+import { Material } from './material';
 
 export class Window extends InsetElement {
     private numberOfPanes: number; // Nouvelle propriété pour le nombre de vitres

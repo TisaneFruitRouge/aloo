@@ -15,31 +15,43 @@ export class InsetElement {
         this.thickness = thickness;
     }
 
-    public getLength(): number {
+    public getLength() {
         return this.length;
     }
 
-    public getRelativePosition(): number {
+    public getRelativePosition() {
         return this.relativePosition;
     }
 
-    public getThickness(): number {
+    public getThickness() {
         return this.thickness;
     }
 
-    public setLength(length: number): void {
+    public setLength(length: number) {
         this.length = length;
     }
 
-    public setRelativePosition(relativePosition: number): void {
+    public setRelativePosition(relativePosition: number) {
         this.relativePosition = relativePosition;
     }
 
-    public setThickness(thickness: number): void {
+    public setThickness(thickness: number) {
         this.thickness = thickness;
     }
 
-    public toggleHoverState(): void {
+    public toggleHoverState() {
         this.isHovered = !this.isHovered;
+    }
+
+    public getHoveredState() {
+        return this.isHovered;
+    }
+
+    public setHoveredState(isHovered: boolean) {
+        this.isHovered = isHovered;
+    }
+
+    public drawHover(context: CanvasRenderingContext2D) {
+        // for walls, the drawHover is just a color change
     }
 }

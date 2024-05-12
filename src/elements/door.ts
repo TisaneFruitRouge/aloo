@@ -1,4 +1,5 @@
 import { InsetElement } from "./inset-element";
+import { Material } from "./material";
 
 export class Door extends InsetElement {
     private openingType: string; // par exemple 'coulissante', 'battante'
@@ -18,19 +19,19 @@ export class Door extends InsetElement {
         this.isOpen = false;
     }
 
-    public getOpeningType(): string {
+    public getOpeningType() {
         return this.openingType;
     }
 
-    public getDoorMaterial(): Material {
+    public getDoorMaterial() {
         return this.doorMaterial;
     }
 
-    public setOpeningType(openingType: string): void {
+    public setOpeningType(openingType: string) {
         this.openingType = openingType;
     }
 
-    public toggleDoor(): void {
+    public toggleDoor() {
         this.isOpen = !this.isOpen;
     }
 }

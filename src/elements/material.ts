@@ -11,3 +11,5 @@ class Material {
         this.color = color;
     }
 }
+
+export { Material }
