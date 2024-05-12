@@ -1,4 +1,18 @@
-canvas {
+/* canvas {
     width: 100vw;
     height: 100vh;
-}
+} */
+
+.canvas-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+  
+  .canvas-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }

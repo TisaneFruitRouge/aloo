@@ -13,10 +13,15 @@ export class CanvaComponent implements AfterViewInit {
   
   @Input() canvasController!: CanvasController;
 
-  @ViewChild('canvas', { static: false })
-  canvas!: ElementRef<HTMLCanvasElement>;
+  // @ViewChild('canvas', { static: false })
+  // canvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('backgroundCanvas') backgroundCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('interactiveCanvas') interactiveCanvas!: ElementRef<HTMLCanvasElement>;
   
-  public context!: CanvasRenderingContext2D;
+  // public context!: CanvasRenderingContext2D;
+
+  private backgroundContext?: CanvasRenderingContext2D;
+  private interactiveContext?: CanvasRenderingContext2D;
 
   ngAfterViewInit(): void {
     window.addEventListener('mousemove', (e) => {

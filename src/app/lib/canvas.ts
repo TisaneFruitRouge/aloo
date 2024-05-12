@@ -16,7 +16,8 @@ export enum Tools {
 }
 
 class CanvasController {
-    private context: CanvasRenderingContext2D;
+    private backgroundContext: CanvasRenderingContext2D;
+    private interactiveContext: CanvasRenderingContext2D;
     private width: number;
     private height: number;
     private ghostMode: boolean = false;
@@ -37,12 +38,15 @@ class CanvasController {
 
     private spacing = 100;
 
-    public constructor(context: CanvasRenderingContext2D, width: number, height: number) {
-        this.context = context;
+    public constructor(backgroundContext: CanvasRenderingContext2D, interactiveContext:CanvasRenderingContext2D, width: number, height: number) {
+        this.backgroundContext = backgroundContext;
+        this.interactiveContext = interactiveContext;
         this.width = width;
         this.height = height;
 
         this.house = new House(new Array<Wall>());
+
+        this.drawGrid();
     }
 
     public setShift(state: boolean) {
@@ -52,29 +56,29 @@ class CanvasController {
     private drawGrid() {
 
         // Save the current context state
-        this.context.save();
+        this.backgroundContext.save();
 
 
-        this.context.beginPath();
-        this.context.setLineDash([5, 5]); // Set the line dash pattern for dotted lines
-        this.context.strokeStyle = 'gray';
+        this.backgroundContext.beginPath();
+        this.backgroundContext.setLineDash([5, 5]); // Set the line dash pattern for dotted lines
+        this.backgroundContext.strokeStyle = 'gray';
 
         // Vertical lines
         for (let x = 0; x <= this.width; x += this.spacing) {
-            this.context.moveTo(x, 0);
-            this.context.lineTo(x, this.height);
+            this.backgroundContext.moveTo(x, 0);
+            this.backgroundContext.lineTo(x, this.height);
         }
 
         // Horizontal lines
         for (let y = 0; y <= this.height; y += this.spacing) {
-            this.context.moveTo(0, y);
-            this.context.lineTo(this.width, y);
+            this.backgroundContext.moveTo(0, y);
+            this.backgroundContext.lineTo(this.width, y);
         }
 
-        this.context.stroke();
+        this.backgroundContext.stroke();
 
         // Restore the context to its default state
-        this.context.restore();
+        this.backgroundContext.restore();
     }
 
     public undo() {
@@ -95,18 +99,18 @@ class CanvasController {
     }
 
     public updateCanva() {
-        this.context.clearRect(0, 0, this.width, this.height);
+        this.interactiveContext.clearRect(0, 0, this.width, this.height);
 
-        this.drawGrid();
+        // this.drawGrid();
 
         // drawing last point
         if (this.lastPoint !== null) {
-            this.lastPoint.draw(this.context);
+            this.lastPoint.draw(this.interactiveContext);
         }
 
         // drawing the walls
         for (const wall of this.house.walls) {
-            wall.draw(this.context);
+            wall.draw(this.interactiveContext);
             wall.isHovered = false;
         }
 
@@ -140,7 +144,7 @@ class CanvasController {
     }
 
     private clickWithDraw(x: number, y: number) {
-        this.context.fillStyle = 'green';
+        this.interactiveContext.fillStyle = 'green';
 
         if (this.lastPoint !== null) { // creating a wall
             let newPoint: Point;
@@ -290,7 +294,7 @@ class CanvasController {
             return;
         }
 
-        this.context.fillStyle = 'green';
+        this.interactiveContext.fillStyle = 'green';
 
         const mousePoint = new Point(mouseX, mouseY);
         
@@ -301,7 +305,7 @@ class CanvasController {
             point = createAlignedPoints(mousePoint, this.lastPoint, al)[0]
         }
 
-        drawLine(this.context, point, this.lastPoint);
+        drawLine(this.interactiveContext, point, this.lastPoint);
     }
 
     private hoverOnElement(x: number, y: number) {
@@ -317,7 +321,7 @@ class CanvasController {
         }
 
         hoverableElement.isHovered = true;
-        hoverableElement.drawHover(this.context);
+        hoverableElement.drawHover(this.interactiveContext);
     }
 
     private getHoverableElement (x: number, y: number) {

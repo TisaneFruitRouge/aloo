@@ -24,13 +24,25 @@ export class AppComponent implements AfterViewInit {
   public canvasController!: CanvasController;
 
   ngAfterViewInit(): void {
-    const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-    if (canvas !== null) {
-      let context = canvas.getContext('2d') as CanvasRenderingContext2D;
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+    const backgroundCanvas = document.getElementById("backgroundCanvas") as HTMLCanvasElement | null;
+    const interactiveCanvas = document.getElementById("interactiveCanvas") as HTMLCanvasElement | null;
 
-      this.canvasController = new CanvasController(context, window.innerWidth, window.innerHeight);
+    if (backgroundCanvas && interactiveCanvas) {
+      const backgroundContext = backgroundCanvas.getContext('2d');
+      const interactiveContext = interactiveCanvas.getContext('2d');
+
+      if (backgroundContext && interactiveContext) {
+        backgroundCanvas.width = window.innerWidth;
+        backgroundCanvas.height = window.innerHeight;
+        interactiveCanvas.width = window.innerWidth;
+        interactiveCanvas.height = window.innerHeight;
+
+        this.canvasController = new CanvasController(backgroundContext, interactiveContext, window.innerWidth, window.innerHeight);
+      } else {
+        console.error('Failed to get drawing context for the canvases');
+      }
+    } else {
+      console.error('Failed to find canvas elements');
     }
   }
 }
