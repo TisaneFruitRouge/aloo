@@ -8,6 +8,10 @@ import { HOVERING_DISTANCE } from "./constants";
 import { findIntersectionPoint, getDistance, getDistanceFromLine } from "./geomerty";
 import { copyInstanceOfClass, drawLine } from "./utils";
 
+/**
+ * Enum for the different tools available in the application
+ * (Toolbar at the top of the canvas)
+ */
 export enum Tools {
     Draw,
     Door,
@@ -16,28 +20,50 @@ export enum Tools {
     RemoveAll
 }
 
+/**
+ * Class to control the canvas and the elements drawn on it
+ */
 class CanvasController {
+
+    // The three different contexts for the canvas to improve performance
+    // Background context is used for the static points and lines
     private backgroundContext: CanvasRenderingContext2D;
+
+    // Interactive context is used for the dynamic points and lines
     private interactiveContext: CanvasRenderingContext2D;
+
+    // Static context is used for the grid
     private staticContext: CanvasRenderingContext2D;
+
     private width: number;
     private height: number;
+
+    // Ghost mode is used to draw a temporary line that is not yet confirmed
     private ghostMode: boolean = false;
 
+    // Is the shift key pressed or not (used for alignment of lines horizontally or vertically)
     private shiftPressed = false;
 
+    // The house object that contains all the elements drawn on the canvas
     private house: House;
+
+    // The last point that was placed on the canvas
     private lastPoint: Point | null = null;
 
+    // The tool that is currently selected
     private currentTool: Tools = Tools.Draw;
 
+    // The mouse position on the canvas
     public mouseX = 0;
     public mouseY = 0;
 
+    // The element that is currently hovered by the mouse
     private hoveredElement: Point | Wall | Door | Window | null = null;
 
+    // Array of commands that have been executed
     private commands:Array<Command> = [];
 
+    // Grid spacing
     private spacing = 100;
 
     public constructor(backgroundContext: CanvasRenderingContext2D, interactiveContext:CanvasRenderingContext2D,
@@ -54,10 +80,17 @@ class CanvasController {
         this.drawGrid();
     }
 
+    /**
+     * Set the shift key state
+     * @param state State of the shift key (true if pressed, false if not pressed)
+     */
     public setShift(state: boolean) {
         this.shiftPressed = state;
     }
 
+    /**
+     * Draw the grid on the canvas using the given spacing settings
+     */
     private drawGrid() {
 
         // Save the current context state
@@ -85,6 +118,9 @@ class CanvasController {
         this.backgroundContext.restore();
     }
 
+    /**
+     * Undo the last command
+     */
     public undo() {
         const size = this.commands.length;
 
@@ -100,6 +136,9 @@ class CanvasController {
         this.updateCanvaLastPoint();
     }
 
+    /**
+     * Redo the last command
+     */
     public redo() {
 
     }
@@ -283,6 +322,9 @@ class CanvasController {
         }
     }
 
+    /**
+     * Remove all elements from the canvas
+     */
     public removeAll() {
         this.house.walls = [];
         this.lastPoint = null;
@@ -292,12 +334,21 @@ class CanvasController {
         this.updateCanvaLastPoint();
     }
 
+    /**
+     * Set the current tool to the specified tool
+     * @param tool Tool to set as the current tool
+     */
     public setCurrentTool(tool: Tools) {
         this.currentTool = tool;
         this.lastPoint = null;
         this.ghostMode = false;
     }
 
+    /**
+     * Draw a temporary line that is not yet confirmed
+     * @param mouseX The x coordinate of the mouse
+     * @param mouseY The y coordinate of the mouse
+     */
     public drawGhostelement(mouseX: number, mouseY: number) {
         if (!this.ghostMode) {
             return;
@@ -371,6 +422,12 @@ class CanvasController {
     }
 }
 
+/**
+ * Determine the alignment of two points based on the mouse position
+ * @param mousePoint Point where the mouse is currently located
+ * @param lastPoint  Point where the last point was placed
+ * @returns 'horizontal' if the points are aligned horizontally, 'vertical' if they are aligned vertically
+ */
 function determineAlignment(mousePoint: Point, lastPoint:Point) {
     
     // Calculate the absolute differences in x and y coordinates
@@ -385,7 +442,13 @@ function determineAlignment(mousePoint: Point, lastPoint:Point) {
     }
 }
 
-// Function to create two points aligned either vertically or horizontally
+/**
+ * Function to create two points aligned either vertically or horizontally
+ * @param mousePoint Point where the mouse is currently located
+ * @param lastPoint  Point where the last point was placed
+ * @param alignment  Alignment of the points ('vertical' or 'horizontal')
+ * @returns          An array containing the two points aligned either vertically or horizontally
+ */
 function createAlignedPoints(mousePoint:Point, lastPoint:Point, alignment: string) {
     let point1, point2;
     if (alignment === 'vertical') {
