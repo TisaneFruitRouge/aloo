@@ -1,17 +1,19 @@
+import { Point } from "./point";
+
 export class InsetElement {
     private length: number;
-    private relativePosition: number;  // Position relative au début du mur
+    private center: Point;  // Position relative au début du mur
     private thickness: number;
     public isHovered = false;
     private id = crypto.randomUUID();
 
     public constructor(
         length: number,
-        relativePosition: number,
+        center: Point,
         thickness: number
     ) {
         this.length = length;
-        this.relativePosition = relativePosition;
+        this.center = center;
         this.thickness = thickness;
     }
 
@@ -19,8 +21,8 @@ export class InsetElement {
         return this.length;
     }
 
-    public getRelativePosition() {
-        return this.relativePosition;
+    public getCenter() {
+        return this.center;
     }
 
     public getThickness() {
@@ -31,8 +33,8 @@ export class InsetElement {
         this.length = length;
     }
 
-    public setRelativePosition(relativePosition: number) {
-        this.relativePosition = relativePosition;
+    public setCenter(center: Point) {
+        this.center = center;
     }
 
     public setThickness(thickness: number) {

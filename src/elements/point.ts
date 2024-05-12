@@ -43,9 +43,9 @@ export class Point {
         context.restore();
     }
 
-    public draw(context: CanvasRenderingContext2D) {
+    public draw(context: CanvasRenderingContext2D, color = "black") {
         context.save();
-        context.fillStyle = 'black';
+        context.fillStyle = color;
         context.fillRect(this.x - WIDTH / 2, this.y - HEIGHT / 2, WIDTH, WIDTH);
         context.restore();
     }

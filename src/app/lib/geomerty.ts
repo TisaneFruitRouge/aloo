@@ -76,4 +76,43 @@ export function findIntersectionPoint(p1: Point, p2: Point, p3: Point, p4: Point
   }
 }
 
+/**
+ * Determine the alignment of two points based on the mouse position
+ * @param mousePoint Point where the mouse is currently located
+ * @param lastPoint  Point where the last point was placed
+ * @returns 'horizontal' if the points are aligned horizontally, 'vertical' if they are aligned vertically
+ */
+export function determineAlignment(mousePoint: Point, lastPoint:Point) {
+    
+  // Calculate the absolute differences in x and y coordinates
+  const dx = Math.abs(mousePoint.getX() - lastPoint.getX());
+  const dy = Math.abs(mousePoint.getY() - lastPoint.getY());
   
+  // Determine alignment based on which difference is greater
+  if (dx < dy) {
+      return 'horizontal';
+  } else {
+      return 'vertical';
+  }
+}
+
+/**
+* Function to create two points aligned either vertically or horizontally
+* @param mousePoint Point where the mouse is currently located
+* @param lastPoint  Point where the last point was placed
+* @param alignment  Alignment of the points ('vertical' or 'horizontal')
+* @returns          An array containing the two points aligned either vertically or horizontally
+*/
+export function createAlignedPoints(mousePoint:Point, lastPoint:Point, alignment: string) {
+  let point1, point2;
+  if (alignment === 'vertical') {
+      point1 = new Point(mousePoint.getX(), lastPoint.getY());
+      point2 = new Point(mousePoint.getX(), mousePoint.getY()); 
+  } else if (alignment === 'horizontal') {
+      point1 = new Point(lastPoint.getX(), mousePoint.getY());
+      point2 = new Point(mousePoint.getX(), mousePoint.getY()); 
+  } else {
+      throw new Error('Invalid alignment specified. Please use "vertical" or "horizontal".');
+  }
+  return [point1, point2];
+}

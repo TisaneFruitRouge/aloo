@@ -1,5 +1,6 @@
 import { InsetElement } from "./inset-element";
 import { Material } from "./material";
+import { Point } from "./point";
 
 export class Door extends InsetElement {
     private openingType: string; // par exemple 'coulissante', 'battante'
@@ -8,12 +9,12 @@ export class Door extends InsetElement {
 
     public constructor(
         length: number,
-        relativePosition: number,
+        center: Point,
         openingType: string,
         doorMaterialType: string,
         doorColor: string,
     ) {
-        super(length, relativePosition, 5); // CHANGER LA VALEUR PAR DEFAUT
+        super(length, center, 5); // CHANGER LA VALEUR PAR DEFAUT
         this.openingType = openingType;
         this.doorMaterial = new Material(doorMaterialType, doorColor);
         this.isOpen = false;
@@ -33,5 +34,9 @@ export class Door extends InsetElement {
 
     public toggleDoor() {
         this.isOpen = !this.isOpen;
+    }
+
+    public draw(context: CanvasRenderingContext2D) {
+
     }
 }
