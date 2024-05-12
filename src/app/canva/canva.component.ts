@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, ViewChild, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import CanvasController from '../lib/canvas';
 
@@ -29,5 +29,36 @@ export class CanvaComponent implements AfterViewInit {
   handleClick(e: MouseEvent): void {
     this.canvasController.updateCanva();
     this.canvasController.handleClick(e.clientX, e.clientY);
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    if (event.key === 'z' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault(); // Prevent the default action
+      this.handleCtrlZ();
+    } else if (event.key === 'Shift') {
+      event.preventDefault(); // Prevent the default action
+      this.handleShiftPress();
+    }
+  } 
+
+  @HostListener('window:keyup', ['$event'])
+  handleKeyboardKeyUpEvent(event: KeyboardEvent) {
+    if (event.key === 'Shift') {
+      event.preventDefault(); // Prevent the default action
+      this.handleShiftUnpress();
+    }
+  }
+
+  handleCtrlZ() {
+    this.canvasController.undo();
+  }
+
+  handleShiftPress() {
+    this.canvasController.setShift(true);
+  }
+
+  handleShiftUnpress() {
+    this.canvasController.setShift(false);
   }
 }

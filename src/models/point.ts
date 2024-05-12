@@ -5,6 +5,7 @@ class Point {
     public x: number;
     public y: number;
     public id = crypto.randomUUID();
+    public isHovered = false;
 
     public constructor(x: number, y:number) {
         this.x = x;
@@ -20,21 +21,7 @@ class Point {
 
     public draw(context: CanvasRenderingContext2D) {
         context.fillStyle = 'black';
-
         context.fillRect(this.x - WIDTH / 2, this.y - HEIGHT / 2, WIDTH, WIDTH);
-    }
-
-    public static drawLine(context: CanvasRenderingContext2D, sX: number, sY: number, eX: number, eY: number) {
-        // Start a new Path
-
-        // context.lineWidth = WALL_THICKNESS;
-
-        context.beginPath();
-        context.moveTo(sX, sY);
-        context.lineTo(eX, eY);
-
-        // Draw the Path
-        context.stroke();  
     }
 
     public toString() {
