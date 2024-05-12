@@ -5,7 +5,7 @@ import { Point } from "../../elements/point";
 import { Wall } from "../../elements/wall";
 import Command from "./command";
 import { HOVERING_DISTANCE } from "./constants";
-import { findIntersectionPoint, getDistance, getDistanceFromLine } from "./geomerty";
+import { createAlignedPoints, determineAlignment, findIntersectionPoint, getDistance, getDistanceFromLine } from "./geomerty";
 import { copyInstanceOfClass, drawLine } from "./utils";
 
 /**
@@ -49,6 +49,10 @@ class CanvasController {
 
     // The last point that was placed on the canvas
     private lastPoint: Point | null = null;
+
+    // the ghost window element to draw if the window tools is selected
+    private ghostWindow: Window | null = null;
+    private windowClosestWall: Wall | null = null;
 
     // The tool that is currently selected
     private currentTool: Tools = Tools.Draw;
@@ -169,6 +173,9 @@ class CanvasController {
             this.drawGhostelement(this.mouseX, this.mouseY);
         }
 
+        if (this.currentTool === Tools.Window) {
+            this.drawWindowGhost(this.mouseX, this.mouseY)
+        }
 
         this.hoverOnElement(this.mouseX, this.mouseY);
     }
@@ -286,7 +293,9 @@ class CanvasController {
     }
 
     private clickWithWindow(x: number, y: number) {
-
+        if (this.windowClosestWall !== null && this.ghostWindow !== null) {
+            this.windowClosestWall.addWindow(this.ghostWindow)
+        }
     }
 
     private clickWithRemove(x: number, y: number) {
@@ -329,6 +338,8 @@ class CanvasController {
         this.house.walls = [];
         this.lastPoint = null;
         this.ghostMode = false;
+        this.ghostWindow = null;
+        this.windowClosestWall = null;
         this.updateCanva();
         this.updateCanvaWalls();
         this.updateCanvaLastPoint();
@@ -342,6 +353,8 @@ class CanvasController {
         this.currentTool = tool;
         this.lastPoint = null;
         this.ghostMode = false;
+        this.ghostWindow = null;
+        this.windowClosestWall = null;
     }
 
     /**
@@ -420,47 +433,41 @@ class CanvasController {
             return null;
         }
     }
-}
 
-/**
- * Determine the alignment of two points based on the mouse position
- * @param mousePoint Point where the mouse is currently located
- * @param lastPoint  Point where the last point was placed
- * @returns 'horizontal' if the points are aligned horizontally, 'vertical' if they are aligned vertically
- */
-function determineAlignment(mousePoint: Point, lastPoint:Point) {
-    
-    // Calculate the absolute differences in x and y coordinates
-    const dx = Math.abs(mousePoint.getX() - lastPoint.getX());
-    const dy = Math.abs(mousePoint.getY() - lastPoint.getY());
-    
-    // Determine alignment based on which difference is greater
-    if (dx < dy) {
-        return 'horizontal';
-    } else {
-        return 'vertical';
+    private drawWindowGhost(mouseX: number, mouseY: number) {
+        if (this.house.walls.length > 0) {
+            const closestWall = Wall.findClosestWallToPoint(new Point(mouseX, mouseY), this.house.walls);
+            if (closestWall !== null) {
+                const closestPoint = Wall.findClosestPointOnWall(new Point(mouseX, mouseY), closestWall);
+                const ghostWindow = new Window(100, closestPoint, 2, "normal", "normal", "#FFFFFF");
+                
+                const distanceA = getDistance(
+                    closestPoint.getX(), 
+                    closestPoint.getY(), 
+                    closestWall.getSegment()[0].getX(),
+                    closestWall.getSegment()[0].getY()
+                )
+
+                const distanceB = getDistance(
+                    closestPoint.getX(), 
+                    closestPoint.getY(), 
+                    closestWall.getSegment()[1].getX(),
+                    closestWall.getSegment()[1].getY()
+                )
+
+                if (distanceA >= 50 && distanceB >= 50) {
+                    this.ghostWindow = ghostWindow;
+                    this.windowClosestWall = closestWall;
+                    this.ghostWindow.draw(
+                        this.interactiveContext, 
+                        closestWall.getSegment()[0], 
+                        closestWall.getSegment()[1], 
+                        true
+                    );
+                }
+            }
+        }
     }
 }
 
-/**
- * Function to create two points aligned either vertically or horizontally
- * @param mousePoint Point where the mouse is currently located
- * @param lastPoint  Point where the last point was placed
- * @param alignment  Alignment of the points ('vertical' or 'horizontal')
- * @returns          An array containing the two points aligned either vertically or horizontally
- */
-function createAlignedPoints(mousePoint:Point, lastPoint:Point, alignment: string) {
-    let point1, point2;
-    if (alignment === 'vertical') {
-        point1 = new Point(mousePoint.getX(), lastPoint.getY());
-        point2 = new Point(mousePoint.getX(), mousePoint.getY()); 
-    } else if (alignment === 'horizontal') {
-        point1 = new Point(lastPoint.getX(), mousePoint.getY());
-        point2 = new Point(mousePoint.getX(), mousePoint.getY()); 
-    } else {
-        throw new Error('Invalid alignment specified. Please use "vertical" or "horizontal".');
-    }
-    return [point1, point2];
-}
-
-export default CanvasController;
+export default CanvasController;    

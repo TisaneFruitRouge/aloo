@@ -31,7 +31,6 @@ export class CanvaComponent implements AfterViewInit {
   }
 
   handleClick(e: MouseEvent): void {
-
     this.canvasController.handleClick(e.clientX, e.clientY);
     this.canvasController.updateCanva();
     this.canvasController.updateCanvaLastPoint();
