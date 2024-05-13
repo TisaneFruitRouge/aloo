@@ -11,9 +11,9 @@ export class UndoRedo {
 
     // NOTE: It's better to avoid circular dependancies (e.g. CanvasController -> UndoRedo -> CanvasController)
     // But for the sake of simplicity in this project we will keep it like this
-    private canvasController:CanvasController;
+    private canvasController: CanvasController;
 
-    public constructor(canvasController:CanvasController) {
+    public constructor(canvasController: CanvasController) {
         this.undoStack = [];
         this.redoStack = [];
 
@@ -23,8 +23,10 @@ export class UndoRedo {
     public undo() {
         if (this.undoStack.length > 0) {
             const state = this.undoStack.pop();
-            if (state)
+            if (state) {
+                this.redoStack.push(state);
                 this.applyState(state);
+            }
             else
                 console.error("Undo stack is empty");
         }
@@ -33,21 +35,23 @@ export class UndoRedo {
     public redo() {
         if (this.redoStack.length > 0) {
             const state = this.redoStack.pop();
-            if (state)
+            if (state) {
+                this.undoStack.push(state);
                 this.applyState(state);
+            }
             else
                 console.error("Redo stack is empty");
         }
     }
 
     public addState(state: AppState) {
-        if(state.houseState == null)
+        if (state.houseState == null)
             return;
         this.undoStack.push(state);
     }
 
     public applyState(state: AppState) {
-        this.redoStack.push(state);
+
         this.canvasController.applyState(state.houseState);
     }
 }
