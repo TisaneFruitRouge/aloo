@@ -130,8 +130,6 @@ class CanvasController {
 
     public applyState(house: House) {
         this.house.walls = house.walls;
-        console.log("State applied");
-        console.log(this.house);
     }
 
     /**
@@ -329,6 +327,8 @@ class CanvasController {
         if (this.hoveredElement !== null) {
             if (this.hoveredElement instanceof Point) {
                 const currentHouse = copyInstanceOfClass(this.house);
+
+                // Add the current state to the undo stack
                 this.undoManager.addState({ houseState: currentHouse });
 
                 let preservedWalls = [];
@@ -339,8 +339,10 @@ class CanvasController {
                     ) {
                         preservedWalls.push(wall)
                     }
-                    this.house.walls = preservedWalls;
+                    
                 }
+                this.house.walls = preservedWalls;
+                this.updateAllCanvases();
 
                 // const command = new Command(
                 //     (canvaController=this) => {

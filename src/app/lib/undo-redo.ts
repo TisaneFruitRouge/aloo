@@ -44,15 +44,10 @@ export class UndoRedo {
         if(state.houseState == null)
             return;
         this.undoStack.push(state);
-
-        console.log("State added");
-        console.log(state.houseState);
     }
 
     public applyState(state: AppState) {
         this.redoStack.push(state);
-        console.log("Applying state");
-        // TODO: Apply the state
         this.canvasController.applyState(state.houseState);
     }
 }
