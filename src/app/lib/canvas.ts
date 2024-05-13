@@ -1,12 +1,13 @@
 import House from "../../elements/house";
 import { Window } from "../../elements/window";
 import { Door } from "../../elements/door";
-import { Point } from "../../elements/point";
+import { Point } from "../../elements/point";
 import { Wall } from "../../elements/wall";
-import Command from "./command";
+// import Command from "./command";
 import { HOVERING_DISTANCE } from "./constants";
 import { createAlignedPoints, determineAlignment, findIntersectionPoint, getDistance, getDistanceFromLine } from "./geomerty";
 import { copyInstanceOfClass, drawLine } from "./utils";
+import { UndoRedo } from "./undo-redo";
 
 /**
  * Enum for the different tools available in the application
@@ -65,30 +66,35 @@ class CanvasController {
     private hoveredElement: Point | Wall | Door | Window | null = null;
 
     // Array of commands that have been executed
-    private commands:Array<Command> = [];
+    // private commands:Array<Command> = [];
+
+    private undoManager: UndoRedo;
 
     // Grid spacing
     private spacing = 100;
 
-    public constructor(backgroundContext: CanvasRenderingContext2D, interactiveContext:CanvasRenderingContext2D,
-        staticContext:CanvasRenderingContext2D, width: number, height: number) {
-            
+    public constructor(backgroundContext: CanvasRenderingContext2D, interactiveContext: CanvasRenderingContext2D,
+        staticContext: CanvasRenderingContext2D, width: number, height: number) {
+
         this.backgroundContext = backgroundContext;
         this.interactiveContext = interactiveContext;
         this.staticContext = staticContext;
         this.width = width;
         this.height = height;
 
-        this.house = new House(new Array<Wall>());
+        this.house = new House([]);
+        this.house.walls = [];
 
         this.drawGrid();
+
+        this.undoManager = new UndoRedo(this);
     }
 
     /**
      * Set the shift key state
      * @param state State of the shift key (true if pressed, false if not pressed)
      */
-    public setShift(state: boolean) {
+    public setShift(state: boolean) {
         this.shiftPressed = state;
     }
 
@@ -122,34 +128,47 @@ class CanvasController {
         this.backgroundContext.restore();
     }
 
+    public applyState(house: House) {
+        this.house.walls = house.walls;
+        console.log("State applied");
+        console.log(this.house);
+    }
+
     /**
      * Undo the last command
      */
     public undo() {
-        const size = this.commands.length;
+        this.undoManager.undo();
 
-        if (size < 1) {
-            return;
+        // if we are in the middle of a ghost line, we need to clear it
+        if (this.ghostMode) {
+            this.ghostMode = false;
         }
+        this.lastPoint = null;
+        this.updateAllCanvases();
+    }
 
-        const lastCommand = this.commands[size - 1];
-        lastCommand.undoFnc();
-        this.commands.pop();
-        this.updateCanva();
-        this.updateCanvaWalls();
-        this.updateCanvaLastPoint();
+    private clearStaticCanvas() {
+        this.staticContext.clearRect(0, 0, this.width, this.height);
     }
 
     /**
      * Redo the last command
      */
     public redo() {
+        this.undoManager.redo();
 
+        this.updateAllCanvases();
     }
 
-    public updateCanvaWalls()
-    {
-        // this.staticContext.clearRect(0, 0, this.width, this.height);
+    private updateAllCanvases() {
+        this.clearStaticCanvas();
+        this.updateCanva();
+        this.updateCanvaWalls();
+        this.updateCanvaLastPoint();
+    }
+
+    public updateCanvaWalls() {
         // drawing the walls
         for (const wall of this.house.walls) {
             wall.draw(this.staticContext);
@@ -158,7 +177,6 @@ class CanvasController {
     }
 
     public updateCanvaLastPoint() {
-        this.staticContext.clearRect(0, 0, this.width, this.height);
         // drawing last point
         if (this.lastPoint !== null) {
             this.lastPoint.draw(this.staticContext);
@@ -206,84 +224,93 @@ class CanvasController {
         if (this.lastPoint !== null) { // creating a wall
             let newPoint: Point;
 
-            const currentGhostMode = this.ghostMode;
-            const currentLastPoint = copyInstanceOfClass(this.lastPoint);
-            const currentHouse = copyInstanceOfClass(this.house);
+            // Add the current state to the undo stack
+            this.undoManager.addState({ houseState: copyInstanceOfClass(this.house) });
 
-            const command = new Command(
-                (canvaController=this) => {
-                    if (this.hoveredElement !== null && this.hoveredElement instanceof Point) { // action to perform related to the hovered element
-                        newPoint = this.hoveredElement; // the point we clicked was the one hovered
-                        this.ghostMode = false;
-                    } else { // creating a new point
-                        newPoint = new Point(x, y);
-                        
-                        if (this.shiftPressed && this.lastPoint !== null) {
-                            const al = determineAlignment(newPoint, this.lastPoint)
-                            newPoint = createAlignedPoints(newPoint, this.lastPoint, al)[0]
-                        }
-                    }
-                    
-                    for (const wall of this.house.walls) {
-                        let intersection = findIntersectionPoint( // finding the intersection
-                        canvaController.lastPoint,
-                            newPoint,
-                            wall.getSegment()[0],
-                            wall.getSegment()[1]
-                        );
-        
-                        if (intersection !== null && canvaController.lastPoint.id !== intersection.getId()) {
-                            const newWall = new Wall(canvaController.lastPoint, newPoint, "basic", "#FFFFFF");
-                            this.lastPoint = intersection;
-                            this.house.walls.push(newWall);
-                        }
-                    }
-        
-                    const newWall = new Wall(canvaController.lastPoint, newPoint, "basic", "#FFFFFF");
-                    this.house.walls.push(newWall);
-        
-                    if (newPoint === this.hoveredElement) {
-                        this.lastPoint = null;
-                    } else {
-                        this.lastPoint = newPoint;
-                    }
-                    return;
-                },
-                (canvaController=this, lastGhostMode=currentGhostMode, lastLastPoint=currentLastPoint, lastHouse=currentHouse) => {
-                    canvaController.ghostMode = lastGhostMode;
-                    canvaController.lastPoint = lastLastPoint;
-                    canvaController.house = lastHouse;
+            if (this.hoveredElement !== null && this.hoveredElement instanceof Point) { // action to perform related to the hovered element
+                newPoint = this.hoveredElement; // the point we clicked was the one hovered
+                this.ghostMode = false;
+            } else { // creating a new point
+                newPoint = new Point(x, y);
+
+                if (this.shiftPressed && this.lastPoint !== null) {
+                    const al = determineAlignment(newPoint, this.lastPoint)
+                    newPoint = createAlignedPoints(newPoint, this.lastPoint, al)[0]
                 }
-            )
-            command.doFnc();
-            this.commands.push(command);
-            
+            }
+
+            for (const wall of this.house.walls) {
+                let intersection = findIntersectionPoint( // finding the intersection
+                    this.lastPoint,
+                    newPoint,
+                    wall.getSegment()[0],
+                    wall.getSegment()[1]
+                );
+
+                if (intersection !== null && this.lastPoint.getId() !== intersection.getId()) {
+                    const newWall = new Wall(this.lastPoint, newPoint);
+                    this.lastPoint = intersection;
+                    this.house.walls.push(newWall);
+                }
+            }
+
+            const newWall = new Wall(this.lastPoint, newPoint);
+            this.house.walls.push(newWall);
+
+            if (newPoint === this.hoveredElement) {
+                this.lastPoint = null;
+            } else {
+                this.lastPoint = newPoint;
+            }
+
+            // const command = new Command(
+            //     (canvaController=this) => {
+
+
+
+            //         return;
+            //     },
+            //     (canvaController=this, lastGhostMode=currentGhostMode, lastLastPoint=currentLastPoint, lastHouse=currentHouse) => {
+            //         canvaController.ghostMode = lastGhostMode;
+            //         canvaController.lastPoint = lastLastPoint;
+            //         canvaController.house = lastHouse;
+            //     }
+            // )
+            // command.doFnc();
+            // this.commands.push(command);
+
+            // this.undoManager.addState({ houseState: copyInstanceOfClass(this.house) });
+
         } else {
             if (this.hoveredElement !== null && this.hoveredElement instanceof Point) { // the new point is an existing point
-                const command = new Command(
-                    (canvaController) => {
-                        canvaController.lastPoint = canvaController.hoveredElement;
-                        canvaController.ghostMode = true;
-                    },
-                    (canvaController=this, currentLastPoint=this.lastPoint, currentGhostMode=this.ghostMode) => {
-                        canvaController.lastPoint = currentLastPoint;
-                        canvaController.ghostMode = currentGhostMode;
-                    }
-                )
-                command.doFnc();
-                this.commands.push(command);
-                return;
+                this.lastPoint = this.hoveredElement;
+                this.ghostMode = true;
+                // const command = new Command(
+                //     (canvaController) => {
+                //         canvaController.lastPoint = canvaController.hoveredElement;
+                //         canvaController.ghostMode = true;
+                //     },
+                //     (canvaController=this, currentLastPoint=this.lastPoint, currentGhostMode=this.ghostMode) => {
+                //         canvaController.lastPoint = currentLastPoint;
+                //         canvaController.ghostMode = currentGhostMode;
+                //     }
+                // )
+                // command.doFnc();
+                // this.commands.push(command);
+                // return;
             }
-            const command = new Command(
-                (canvaController=this) => {
-                    canvaController.lastPoint = new Point(x, y);
-                },
-                (canvasController=this, currentLastPoint=this.lastPoint) => {
-                    canvasController.lastPoint = currentLastPoint;
-                }
-            );
-            command.doFnc();
-            this.commands.push(command);
+
+            this.lastPoint = new Point(x, y);
+            // const command = new Command(
+            //     (canvaController=this) => {
+            //         canvaController.lastPoint = new Point(x, y);
+            //     },
+            //     (canvasController=this, currentLastPoint=this.lastPoint) => {
+            //         canvasController.lastPoint = currentLastPoint;
+            //     }
+            // );
+            // command.doFnc();
+            // this.commands.push(command);
         }
         this.ghostMode = true;
     }
@@ -302,25 +329,38 @@ class CanvasController {
         if (this.hoveredElement !== null) {
             if (this.hoveredElement instanceof Point) {
                 const currentHouse = copyInstanceOfClass(this.house);
-                const command = new Command(
-                    (canvaController=this) => {
-                        let preservedWalls = [];
-                        for (const [index, wall] of this.house.walls.entries()) {
-                            if (
-                                canvaController.hoveredElement.id !== wall.getSegment()[0].getId() && 
-                                canvaController.hoveredElement.id !== wall.getSegment()[1].getId()
-                            ) {
-                                preservedWalls.push(wall)
-                            }
-                            canvaController.house.walls = preservedWalls;
-                        }
-                    },
-                    (canvaController=this, lastHouse=currentHouse) => {
-                        canvaController.house = lastHouse;
+                this.undoManager.addState({ houseState: currentHouse });
+
+                let preservedWalls = [];
+                for (const [index, wall] of this.house.walls.entries()) {
+                    if (
+                        this.hoveredElement.getId() !== wall.getSegment()[0].getId() &&
+                        this.hoveredElement.getId() !== wall.getSegment()[1].getId()
+                    ) {
+                        preservedWalls.push(wall)
                     }
-                )
-                command.doFnc();
-                this.commands.push(command);
+                    this.house.walls = preservedWalls;
+                }
+
+                // const command = new Command(
+                //     (canvaController=this) => {
+                //         let preservedWalls = [];
+                //         for (const [index, wall] of this.house.walls.entries()) {
+                //             if (
+                //                 canvaController.hoveredElement.id !== wall.getSegment()[0].getId() && 
+                //                 canvaController.hoveredElement.id !== wall.getSegment()[1].getId()
+                //             ) {
+                //                 preservedWalls.push(wall)
+                //             }
+                //             canvaController.house.walls = preservedWalls;
+                //         }
+                //     },
+                //     (canvaController=this, lastHouse=currentHouse) => {
+                //         canvaController.house = lastHouse;
+                //     }
+                // )
+                // command.doFnc();
+                // this.commands.push(command);
             } else if (this.hoveredElement instanceof Wall) {
 
             } else if (this.hoveredElement instanceof Door) {
@@ -340,9 +380,7 @@ class CanvasController {
         this.ghostMode = false;
         this.ghostWindow = null;
         this.windowClosestWall = null;
-        this.updateCanva();
-        this.updateCanvaWalls();
-        this.updateCanvaLastPoint();
+        this.updateAllCanvases();
     }
 
     /**
@@ -372,9 +410,9 @@ class CanvasController {
         }
 
         this.interactiveContext.fillStyle = 'green';
-        
+
         const mousePoint = new Point(mouseX, mouseY);
-        
+
         let point = mousePoint
 
         if (this.shiftPressed) {
@@ -401,7 +439,7 @@ class CanvasController {
         hoverableElement.drawHover(this.interactiveContext);
     }
 
-    private getHoverableElement (x: number, y: number) {
+    private getHoverableElement(x: number, y: number) {
         let lastDist = -1;
 
         for (const wall of this.house.walls) {
@@ -413,8 +451,8 @@ class CanvasController {
                 }
             }
             let wallDist = getDistanceFromLine(
-                x, 
-                y, 
+                x,
+                y,
                 wall.getSegment()[0].getX(),
                 wall.getSegment()[0].getY(),
                 wall.getSegment()[1].getX(),
@@ -440,17 +478,17 @@ class CanvasController {
             if (closestWall !== null) {
                 const closestPoint = Wall.findClosestPointOnWall(new Point(mouseX, mouseY), closestWall);
                 const ghostWindow = new Window(100, closestPoint, 2, "normal", "normal", "#FFFFFF");
-                
+
                 const distanceA = getDistance(
-                    closestPoint.getX(), 
-                    closestPoint.getY(), 
+                    closestPoint.getX(),
+                    closestPoint.getY(),
                     closestWall.getSegment()[0].getX(),
                     closestWall.getSegment()[0].getY()
                 )
 
                 const distanceB = getDistance(
-                    closestPoint.getX(), 
-                    closestPoint.getY(), 
+                    closestPoint.getX(),
+                    closestPoint.getY(),
                     closestWall.getSegment()[1].getX(),
                     closestWall.getSegment()[1].getY()
                 )
@@ -459,9 +497,9 @@ class CanvasController {
                     this.ghostWindow = ghostWindow;
                     this.windowClosestWall = closestWall;
                     this.ghostWindow.draw(
-                        this.interactiveContext, 
-                        closestWall.getSegment()[0], 
-                        closestWall.getSegment()[1], 
+                        this.interactiveContext,
+                        closestWall.getSegment()[0],
+                        closestWall.getSegment()[1],
                         true
                     );
                 }

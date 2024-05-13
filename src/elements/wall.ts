@@ -9,18 +9,14 @@ import { getDistanceFromLine } from "../app/lib/geomerty";
 export class Wall extends StructuralElement {
     private doors: Array<Door>;
     private windows: Array<Window>
-    private wallMaterial: Material;
 
     public constructor(
         A: Point,
         B: Point,
-        wallMaterialType: string,
-        wallColor: string
     ) {
         super(A, B, 5); // CHANGER LA VALEUR PAR DEFAUT
         this.doors = new Array<Door>();
         this.windows = new Array<Window>();
-        this.wallMaterial = new Material(wallMaterialType, wallColor);
     }
 
     static findClosestWallToPoint(point: Point, walls: Wall[]): Wall | null {
