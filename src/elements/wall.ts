@@ -26,15 +26,14 @@ export class Wall extends StructuralElement {
         for (const wall of walls) {
             // Calculate the distance between the point and the wall
             const segment = wall.getSegment();
-            const x1 = segment[0].getX();
-            const y1 = segment[0].getY();
-            const x2 = segment[1].getX();
-            const y2 = segment[1].getY();
-            const distance = getDistanceFromLine(point.getX(), point.getY(), x1, x2, y1, y2);
+
+            const wallCenterPoint = StructuralElement.getCenterPoint(segment[0], segment[1]);
+
+            const distanceBetweenWallAndMouse = Point.getDistanceBetweenTwoPoints(point, wallCenterPoint);
 
             // Update the closest wall if this wall is closer
-            if (distance < minDistance) {
-                minDistance = distance;
+            if (distanceBetweenWallAndMouse < minDistance) {
+                minDistance = distanceBetweenWallAndMouse;
                 closestWall = wall;
             }
         }
@@ -42,35 +41,36 @@ export class Wall extends StructuralElement {
         return closestWall;
     }
 
-    static findClosestPointOnWall(point: Point, wall: Wall) {
-        const x1 = wall.getSegment()[0].getX();
-        const y1 = wall.getSegment()[0].getY();
-        const x2 = wall.getSegment()[1].getX();
-        const y2 = wall.getSegment()[1].getY(); 
-        
-        // Vector representing the wall
-        const wallVector = [x2 - x1, y2 - y1];
-        
-        // Vector from starting point of the wall to the given point
-        const pointVector = [point.getX() - x1, point.getY() - y1];
-        
-        // Calculate the dot product of the wall vector and the point vector
-        const dotProduct = wallVector[0] * pointVector[0] + wallVector[1] * pointVector[1];
-        
-        // Calculate the length of the wall vector squared
-        const wallLengthSquared = wallVector[0] * wallVector[0] + wallVector[1] * wallVector[1];
-        
-        // Calculate the parameter t which represents the position of the closest point on the wall
-        const t = Math.max(0, Math.min(1, dotProduct / wallLengthSquared));
-        
-        // Calculate the coordinates of the closest point on the wall
-        const closestPoint = new Point(
-            x1 + t * wallVector[0],
-            y1 + t * wallVector[1]
-        );
-        
+    static findClosestPointOnWall(mousePos: Point, wall: Wall): Point {
+        // Calculate coefficients A, B, and C of the line equation Ax + By + C = 0
+        const A = wall.getSegment()[1].getY() - wall.getSegment()[0].getY();
+        const B = wall.getSegment()[0].getX() - wall.getSegment()[1].getX();
+        const C =  wall.getSegment()[1].getX() * wall.getSegment()[0].getY() - wall.getSegment()[0].getX() * wall.getSegment()[1].getY();
+    
+        // Calculate the denominator (A^2 + B^2)
+        const denom = A * A + B * B;
+    
+        // Calculate the closest point (x0, y0)
+        const x0 = (B * (B * mousePos.getX() - A * mousePos.getY()) - A * C) / denom;
+        const y0 = (A * (-B * mousePos.getX() + A * mousePos.getY()) - B * C) / denom;
+    
+        const closestPoint = new Point(x0, y0);
+
         return closestPoint;
     }
+
+    static isPointInsideWall(closestPoint: Point, closestWall: Wall): boolean {
+
+        // Check if x0 is between x1 and x2, and if y0 is between y1 and y2
+        const isXInRange = (closestPoint.getX() >= Math.min(closestWall.getSegment()[0].getX(), closestWall.getSegment()[1].getX()) &&
+            closestPoint.getX() <= Math.max(closestWall.getSegment()[0].getX(), closestWall.getSegment()[1].getX()));
+
+        const isYInRange = (closestPoint.getY() >= Math.min(closestWall.getSegment()[0].getY(), closestWall.getSegment()[1].getY()) &&
+            closestPoint.getY() <= Math.max(closestWall.getSegment()[0].getY(), closestWall.getSegment()[1].getY()));
+
+        return isXInRange && isYInRange;
+    }
+    
 
     addDoor(door: Door): void {
         this.doors.push(door);

@@ -213,6 +213,7 @@ class CanvasController {
         }
 
         this.hoverOnElement(this.mouseX, this.mouseY);
+        console.log(this.house.walls)
     }
 
     /**
@@ -272,6 +273,10 @@ class CanvasController {
                     wall.getSegment()[0],
                     wall.getSegment()[1]
                 );
+
+                if (this.lastPoint.getId() === wall.getSegment()[0].getId() || this.lastPoint.getId() === wall.getSegment()[1].getId()) {
+                    continue;
+                }
 
                 if (intersection !== null && this.lastPoint.getId() !== intersection.getId()) {
                     const newWall = new Wall(this.lastPoint, newPoint);
@@ -490,7 +495,7 @@ class CanvasController {
                     closestWall.getSegment()[1].getY()
                 )
 
-                if (distanceA >= 50 && distanceB >= 50) {
+                if (distanceA >= 50 && distanceB >= 50 && Wall.isPointInsideWall(closestPoint, closestWall)) {
                     this.ghostWindow = ghostWindow;
                     this.windowClosestWall = closestWall;
                     this.ghostWindow.draw(
