@@ -3,7 +3,6 @@ import { Point } from "./point";
 import { Door } from "./door";
 import { Window } from "./window";
 import { drawLine } from "../app/lib/utils";
-import { Material } from "./material";
 import { getDistanceFromLine } from "../app/lib/geomerty";
 
 export class Wall extends StructuralElement {
