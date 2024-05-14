@@ -13,10 +13,14 @@ export class CanvaComponent implements AfterViewInit {
   
   @Input() canvasController!: CanvasController;
 
-  @ViewChild('canvas', { static: false })
-  canvas!: ElementRef<HTMLCanvasElement>;
-  
-  public context!: CanvasRenderingContext2D;
+
+  @ViewChild('gridCanvas') gridCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('interactiveCanvas') interactiveCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('staticCanvas') staticCanvas!: ElementRef<HTMLCanvasElement>;
+
+  private gridContext?: CanvasRenderingContext2D;
+  private interactiveContext?: CanvasRenderingContext2D;
+  private staticContext?: CanvasRenderingContext2D;
 
   ngAfterViewInit(): void {
     window.addEventListener('mousemove', (e) => {
@@ -27,8 +31,10 @@ export class CanvaComponent implements AfterViewInit {
   }
 
   handleClick(e: MouseEvent): void {
-    this.canvasController.updateCanva();
     this.canvasController.handleClick(e.clientX, e.clientY);
+    this.canvasController.updateCanva();
+    this.canvasController.updateCanvaLastPoint();
+    this.canvasController.updateCanvaWalls();
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -36,6 +42,9 @@ export class CanvaComponent implements AfterViewInit {
     if (event.key === 'z' && (event.ctrlKey || event.metaKey)) {
       event.preventDefault(); // Prevent the default action
       this.handleCtrlZ();
+    } else if (event.key === 'y' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault(); // Prevent the default action
+      this.handleCtrlY();
     } else if (event.key === 'Shift') {
       event.preventDefault(); // Prevent the default action
       this.handleShiftPress();
@@ -52,6 +61,10 @@ export class CanvaComponent implements AfterViewInit {
 
   handleCtrlZ() {
     this.canvasController.undo();
+  }
+
+  handleCtrlY() {
+    this.canvasController.redo();
   }
 
   handleShiftPress() {
