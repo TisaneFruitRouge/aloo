@@ -3,7 +3,6 @@ import { Window } from "../../elements/window";
 import { Door } from "../../elements/door";
 import { Point } from "../../elements/point";
 import { Wall } from "../../elements/wall";
-// import Command from "./command";
 import { HOVERING_DISTANCE } from "./constants";
 import { createAlignedPoints, determineAlignment, findIntersectionPoint, getDistance, getDistanceFromLine } from "./geomerty";
 import { copyInstanceOfClass, drawLine } from "./utils";
@@ -88,6 +87,14 @@ class CanvasController {
         this.drawGrid();
 
         this.undoManager = new UndoRedo(this);
+        this.addNewUndoRedoState();
+    }
+
+    /**
+     * Add new state to undo manager
+     */
+    private addNewUndoRedoState() {
+        this.undoManager.addState({ houseState: copyInstanceOfClass(this.house) });
     }
 
     /**
@@ -159,6 +166,9 @@ class CanvasController {
         this.updateAllCanvases();
     }
 
+    /**
+     * Update all the canvases
+     */
     private updateAllCanvases() {
         this.clearStaticCanvas();
         this.updateCanva();
@@ -166,6 +176,9 @@ class CanvasController {
         this.updateCanvaLastPoint();
     }
 
+    /**
+     * Update the static canvas with the walls
+     */
     public updateCanvaWalls() {
         // drawing the walls
         for (const wall of this.house.walls) {
@@ -174,6 +187,9 @@ class CanvasController {
         }
     }
 
+    /**
+     * Update the static canvas with the last point
+     */
     public updateCanvaLastPoint() {
         // drawing last point
         if (this.lastPoint !== null) {
@@ -181,6 +197,9 @@ class CanvasController {
         }
     }
 
+    /**
+     * Update the interactive canvas for ghost and hover elements
+     */
     public updateCanva() {
         this.interactiveContext.clearRect(0, 0, this.width, this.height);
 
@@ -196,6 +215,11 @@ class CanvasController {
         this.hoverOnElement(this.mouseX, this.mouseY);
     }
 
+    /**
+     * Handle the mouse click event
+     * @param x mouse x position
+     * @param y mouse y position
+     */
     public handleClick(x: number, y: number) {
         switch (this.currentTool) {
             case Tools.Draw:
@@ -214,16 +238,20 @@ class CanvasController {
                 this.removeAll();
                 break;
         }
+        // Add the current state to the undo stack
+        this.addNewUndoRedoState();
     }
 
+    /**
+     * Handle the mouse draw click event
+     * @param x mouse x position
+     * @param y mouse y position
+     */
     private clickWithDraw(x: number, y: number) {
         this.interactiveContext.fillStyle = 'green';
 
         if (this.lastPoint !== null) { // creating a wall
             let newPoint: Point;
-
-            // Add the current state to the undo stack
-            this.undoManager.addState({ houseState: copyInstanceOfClass(this.house) });
 
             if (this.hoveredElement !== null && this.hoveredElement instanceof Point) { // action to perform related to the hovered element
                 newPoint = this.hoveredElement; // the point we clicked was the one hovered
@@ -261,75 +289,45 @@ class CanvasController {
                 this.lastPoint = newPoint;
             }
 
-            // const command = new Command(
-            //     (canvaController=this) => {
-
-
-
-            //         return;
-            //     },
-            //     (canvaController=this, lastGhostMode=currentGhostMode, lastLastPoint=currentLastPoint, lastHouse=currentHouse) => {
-            //         canvaController.ghostMode = lastGhostMode;
-            //         canvaController.lastPoint = lastLastPoint;
-            //         canvaController.house = lastHouse;
-            //     }
-            // )
-            // command.doFnc();
-            // this.commands.push(command);
-
-            // this.undoManager.addState({ houseState: copyInstanceOfClass(this.house) });
-
         } else {
             if (this.hoveredElement !== null && this.hoveredElement instanceof Point) { // the new point is an existing point
                 this.lastPoint = this.hoveredElement;
                 this.ghostMode = true;
-                // const command = new Command(
-                //     (canvaController) => {
-                //         canvaController.lastPoint = canvaController.hoveredElement;
-                //         canvaController.ghostMode = true;
-                //     },
-                //     (canvaController=this, currentLastPoint=this.lastPoint, currentGhostMode=this.ghostMode) => {
-                //         canvaController.lastPoint = currentLastPoint;
-                //         canvaController.ghostMode = currentGhostMode;
-                //     }
-                // )
-                // command.doFnc();
-                // this.commands.push(command);
-                // return;
             }
 
             this.lastPoint = new Point(x, y);
-            // const command = new Command(
-            //     (canvaController=this) => {
-            //         canvaController.lastPoint = new Point(x, y);
-            //     },
-            //     (canvasController=this, currentLastPoint=this.lastPoint) => {
-            //         canvasController.lastPoint = currentLastPoint;
-            //     }
-            // );
-            // command.doFnc();
-            // this.commands.push(command);
         }
         this.ghostMode = true;
     }
 
+    /**
+     * Handle the mouse click event with the door tool
+     * @param x mouse x position
+     * @param y mouse y position
+     */
     private clickWithDoor(x: number, y: number) {
 
     }
 
+    /**
+     * Handle the mouse click event with the window tool
+     * @param x mouse x position
+     * @param y mouse y position
+     */
     private clickWithWindow(x: number, y: number) {
         if (this.windowClosestWall !== null && this.ghostWindow !== null) {
             this.windowClosestWall.addWindow(this.ghostWindow)
         }
     }
 
+    /**
+     * Handle the mouse click event with the remove tool
+     * @param x mouse x position
+     * @param y mouse y position
+     */
     private clickWithRemove(x: number, y: number) {
         if (this.hoveredElement !== null) {
             if (this.hoveredElement instanceof Point) {
-                const currentHouse = copyInstanceOfClass(this.house);
-
-                // Add the current state to the undo stack
-                this.undoManager.addState({ houseState: currentHouse });
 
                 let preservedWalls = [];
                 for (const [index, wall] of this.house.walls.entries()) {
@@ -343,26 +341,6 @@ class CanvasController {
                 }
                 this.house.walls = preservedWalls;
                 this.updateAllCanvases();
-
-                // const command = new Command(
-                //     (canvaController=this) => {
-                //         let preservedWalls = [];
-                //         for (const [index, wall] of this.house.walls.entries()) {
-                //             if (
-                //                 canvaController.hoveredElement.id !== wall.getSegment()[0].getId() && 
-                //                 canvaController.hoveredElement.id !== wall.getSegment()[1].getId()
-                //             ) {
-                //                 preservedWalls.push(wall)
-                //             }
-                //             canvaController.house.walls = preservedWalls;
-                //         }
-                //     },
-                //     (canvaController=this, lastHouse=currentHouse) => {
-                //         canvaController.house = lastHouse;
-                //     }
-                // )
-                // command.doFnc();
-                // this.commands.push(command);
             } else if (this.hoveredElement instanceof Wall) {
 
             } else if (this.hoveredElement instanceof Door) {
@@ -425,6 +403,12 @@ class CanvasController {
         drawLine(this.interactiveContext, point, this.lastPoint);
     }
 
+    /**
+     * Handle the mouse hover on element event
+     * @param x mouse x position
+     * @param y mouse y position
+     * Sets the hover element global variable
+     */
     private hoverOnElement(x: number, y: number) {
 
         const hoverableElement = this.getHoverableElement(x, y);
@@ -441,6 +425,12 @@ class CanvasController {
         hoverableElement.drawHover(this.interactiveContext);
     }
 
+    /**
+     * Get the element that is currently hovered by the mouse
+     * @param x mouse x position
+     * @param y mouse y position
+     * @returns The element that is currently hovered by the mouse
+     */
     private getHoverableElement(x: number, y: number) {
         let lastDist = -1;
 
@@ -474,6 +464,11 @@ class CanvasController {
         }
     }
 
+    /**
+     * Draw a ghost window on the wall closest to the mouse (to help user place the window)
+     * @param mouseX mouse x position
+     * @param mouseY mouse y position
+     */
     private drawWindowGhost(mouseX: number, mouseY: number) {
         if (this.house.walls.length > 0) {
             const closestWall = Wall.findClosestWallToPoint(new Point(mouseX, mouseY), this.house.walls);
