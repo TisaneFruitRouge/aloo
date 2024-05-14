@@ -19,6 +19,10 @@ export class StructuralElement {
         return this.segment;
     }
 
+    public static getCenterPoint(A: Point, B: Point) {
+        return new Point((A.getX() + B.getX()) / 2, (A.getY() + B.getY()) / 2);
+    }
+
     public getThickness() {
         return this.thickness;
     }

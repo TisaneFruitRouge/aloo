@@ -14,11 +14,11 @@ export class Point {
         this.y = y;
     }
 
-    public getX() {
+    public getX() : number {
         return this.x;
     }
 
-    public getY() {
+    public getY() : number{
         return this.y;
     }
 
@@ -32,6 +32,10 @@ export class Point {
 
     public getId() {
         return this.id;
+    }
+
+    public static getDistanceBetweenTwoPoints(pointA: Point, pointB: Point) {
+        return Math.sqrt(Math.pow(pointA.getX() - pointB.getX(), 2) + Math.pow(pointA.getY() - pointB.getY(), 2));
     }
 
     public drawHover(context: CanvasRenderingContext2D) {
