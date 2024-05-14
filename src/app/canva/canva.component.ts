@@ -42,6 +42,9 @@ export class CanvaComponent implements AfterViewInit {
     if (event.key === 'z' && (event.ctrlKey || event.metaKey)) {
       event.preventDefault(); // Prevent the default action
       this.handleCtrlZ();
+    } else if (event.key === 'y' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault(); // Prevent the default action
+      this.handleCtrlY();
     } else if (event.key === 'Shift') {
       event.preventDefault(); // Prevent the default action
       this.handleShiftPress();
@@ -58,6 +61,10 @@ export class CanvaComponent implements AfterViewInit {
 
   handleCtrlZ() {
     this.canvasController.undo();
+  }
+
+  handleCtrlY() {
+    this.canvasController.redo();
   }
 
   handleShiftPress() {
