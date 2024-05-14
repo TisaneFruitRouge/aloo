@@ -7,8 +7,9 @@ export class Window extends InsetElement {
     constructor(
         length: number,
         center: Point,
+        thickness: number
     ) {
-        super(length, center, 5); // CHANGER LA VALEUR PAR DEFAUT
+        super(length, center, thickness); // CHANGER LA VALEUR PAR DEFAUT
     }
 
     public draw(context: CanvasRenderingContext2D, wallAPoint: Point, wallBPoint: Point, forceHover?: boolean) {

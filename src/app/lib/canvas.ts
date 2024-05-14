@@ -474,7 +474,7 @@ class CanvasController {
             const closestWall = Wall.findClosestWallToPoint(new Point(mouseX, mouseY), this.house.walls);
             if (closestWall !== null) {
                 const closestPoint = Wall.findClosestPointOnWall(new Point(mouseX, mouseY), closestWall);
-                const ghostWindow = new Window(100, closestPoint, 2, "normal", "normal", "#FFFFFF");
+                const ghostWindow = new Window(100, closestPoint, 5);
 
                 const distanceA = getDistance(
                     closestPoint.getX(),
