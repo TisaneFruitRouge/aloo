@@ -113,7 +113,7 @@ export class Wall extends StructuralElement {
         context.restore();
 
         for (const door of this.doors) {
-            door.draw(context);
+            door.draw(context, this.getSegment()[0], this.getSegment()[1]);
         }
 
         for (const window of this.windows) {

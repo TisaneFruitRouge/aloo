@@ -55,6 +55,10 @@ class CanvasController {
     private ghostWindow: Window | null = null;
     private windowClosestWall: Wall | null = null;
 
+    // the ghost window element to draw if the window tools is selected
+    private ghostDoor: Door | null = null;
+    private doorClosestWall: Wall | null = null;
+
     // The tool that is currently selected
     private currentTool: Tools = Tools.Draw;
 
@@ -194,6 +198,10 @@ class CanvasController {
 
         if (this.currentTool === Tools.Window) {
             this.drawWindowGhost(this.mouseX, this.mouseY)
+        }
+
+        if (this.currentTool === Tools.Door) {
+            this.drawDoorGhost(this.mouseX, this.mouseY)
         }
 
         this.hoverOnElement(this.mouseX, this.mouseY);
@@ -348,6 +356,7 @@ class CanvasController {
                     wall.getSegment()[1]
                 );
 
+                // if the last point is the same as one of the wall points, we skip the wall
                 if (this.lastPoint.getId() === wall.getSegment()[0].getId() || this.lastPoint.getId() === wall.getSegment()[1].getId()) {
                     continue;
                 }
@@ -385,6 +394,12 @@ class CanvasController {
      * @param y mouse y position
      */
     private clickWithDoor(x: number, y: number) {
+<<<<<<< HEAD
+=======
+        if (this.doorClosestWall !== null && this.ghostDoor !== null) {
+            this.doorClosestWall.addDoor(this.ghostDoor)
+        }
+>>>>>>> 5b53c9a (Adding doors)
     }
 
     /**
@@ -593,6 +608,46 @@ class CanvasController {
                     this.ghostWindow = ghostWindow;
                     this.windowClosestWall = closestWall;
                     this.ghostWindow.draw(
+                        this.interactiveContext,
+                        closestWall.getSegment()[0],
+                        closestWall.getSegment()[1],
+                        true
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * Draw a ghost window on the wall closest to the mouse (to help user place the window)
+     * @param mouseX mouse x position
+     * @param mouseY mouse y position
+     */
+    private drawDoorGhost(mouseX: number, mouseY: number) {
+        if (this.house.walls.length > 0) {
+            const closestWall = Wall.findClosestWallToPoint(new Point(mouseX, mouseY), this.house.walls);
+            if (closestWall !== null) {
+                const closestPoint = Wall.findClosestPointOnWall(new Point(mouseX, mouseY), closestWall);
+                const ghostDoor = new Door(100, closestPoint, 5);
+
+                const distanceA = getDistance(
+                    closestPoint.getX(),
+                    closestPoint.getY(),
+                    closestWall.getSegment()[0].getX(),
+                    closestWall.getSegment()[0].getY()
+                )
+
+                const distanceB = getDistance(
+                    closestPoint.getX(),
+                    closestPoint.getY(),
+                    closestWall.getSegment()[1].getX(),
+                    closestWall.getSegment()[1].getY()
+                )
+
+                if (distanceA >= 50 && distanceB >= 50 && Wall.isPointInsideWall(closestPoint, closestWall)) {
+                    this.ghostDoor = ghostDoor;
+                    this.doorClosestWall = closestWall;
+                    this.ghostDoor.draw(
                         this.interactiveContext,
                         closestWall.getSegment()[0],
                         closestWall.getSegment()[1],
