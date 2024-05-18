@@ -28,6 +28,14 @@ export class CanvaComponent implements AfterViewInit {
       this.canvasController.mouseX = e.clientX;
       this.canvasController.mouseY = e.clientY;
     }, false);
+
+    window.addEventListener('mousedown', (e) => {
+      this.canvasController.handleMouseDown(e.clientX, e.clientY);
+    }, false);
+
+    window.addEventListener('mouseup', (e) => {
+      this.canvasController.handleMouseUp(e.clientX, e.clientY);
+    }, false);
   }
 
   handleClick(e: MouseEvent): void {
