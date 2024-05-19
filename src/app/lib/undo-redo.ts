@@ -22,34 +22,41 @@ export class UndoRedo {
 
     /**
      * Undo the last action
+     * @returns true if the undo was successful, false otherwise
      */
-    public undo() {
+    public undo(): boolean {
         if (this.pointer - 1 >= 0) {
             this.pointer--;
             const state = this.undoStack.at(this.pointer);
             if (state) {
                 this.applyState(state);
+                return true;
             }
             else
                 console.error("Undo stack is empty");
         } else
             console.error("No more states to undo");
+        return false;
     }
 
     /**
      * Redo the last undone action
+     * @returns true if the redo was successful, false otherwise
      */
-    public redo() {
+    public redo(): boolean {
         if (this.pointer < this.undoStack.length - 1) {
             this.pointer++;
             const state = this.undoStack.at(this.pointer);
             if (state) {
                 this.applyState(state);
+                return true;
             }
             else
                 console.error("Redo stack is empty");
         } else
             console.error("No more states to redo");
+
+        return false;
     }
 
     /**
@@ -59,8 +66,8 @@ export class UndoRedo {
     public addState(state: AppState) {
         if (state.houseState == null)
             return;
-
-        // If we are at the end of the list, we add push the new state
+        
+        // If we are at the end of the list, we push the new state
         // otherwise we remove the states after the current pointer
         if (this.pointer !== this.undoStack.length - 1)
             this.undoStack.splice(this.pointer, this.undoStack.length - this.pointer);
