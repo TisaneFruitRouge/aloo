@@ -247,7 +247,6 @@ class CanvasController {
      * @param y mouse y position
      */
     public handleClick(x: number, y: number) {
-        let shouldAddNewUndoRedoState = true;
         switch (this.currentTool) {
             case Tools.Draw:
                 this.clickWithDraw(x, y);
@@ -264,23 +263,18 @@ class CanvasController {
             case Tools.RemoveAll:
                 this.removeAll();
                 break;
-            default:
-                shouldAddNewUndoRedoState = false;
-                break;
         }
-
-        // Add the new state to the undo manager
-        if (shouldAddNewUndoRedoState)
-            this.addNewUndoRedoState();
     }
 
     public handleMouseDown(x: number, y: number) {
+        // check if mouse is not on the toolbar and is on the canvas
+        if (y < 100) {
+            return;
+        }
         if (this.currentTool == Tools.Square) {
             // Create a ghost square starting from last point to the current mouse position
             this.ghostMode = true;
             this.lastPoint = new Point(x, y);
-
-            this.addNewUndoRedoState();
 
             this.updateCanvaWalls();
         }
@@ -367,6 +361,7 @@ class CanvasController {
 
             const newWall = new Wall(this.lastPoint, newPoint);
             this.house.walls.push(newWall);
+            this.addNewUndoRedoState();
 
             if (newPoint === this.hoveredElement) {
                 this.lastPoint = null;
@@ -399,7 +394,8 @@ class CanvasController {
      */
     private clickWithWindow(x: number, y: number) {
         if (this.windowClosestWall !== null && this.ghostWindow !== null) {
-            this.windowClosestWall.addWindow(this.ghostWindow)
+            this.windowClosestWall.addWindow(this.ghostWindow);
+            this.addNewUndoRedoState();
         }
     }
 
@@ -424,6 +420,7 @@ class CanvasController {
                 }
                 this.house.walls = preservedWalls;
                 this.updateAllCanvases();
+                this.addNewUndoRedoState();
             } else if (this.hoveredElement instanceof Wall) {
 
             } else if (this.hoveredElement instanceof Door) {
@@ -444,6 +441,7 @@ class CanvasController {
         this.ghostWindow = null;
         this.windowClosestWall = null;
         this.updateAllCanvases();
+        this.addNewUndoRedoState();
     }
 
     /**
