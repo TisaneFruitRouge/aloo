@@ -15,13 +15,18 @@
         [className]="(currentTool === 2 ? 'bg-black/50 ' : '') + 'p-2 hover:bg-black/50 rounded-md duration-200 hover:cursor-pointer fa-xl fa-light text-white'"
     ></fa-icon>
     <fa-icon 
+        [icon]="faSquare" 
+        (click)="chooseSquare()"
+        [className]="(currentTool === 3 ? 'bg-black/50 ' : '') + 'p-2 hover:bg-black/50 rounded-md duration-200 hover:cursor-pointer fa-xl fa-light text-white'"
+    ></fa-icon>
+    <fa-icon 
         [icon]="faTrash" 
         (click)="chooseRemove()"
-        [className]="(currentTool === 3 ? 'bg-black/50 ' : '') + 'p-2 hover:bg-black/50 rounded-md duration-200 hover:cursor-pointer fa-xl fa-light text-white'"
+        [className]="(currentTool === 4 ? 'bg-black/50 ' : '') + 'p-2 hover:bg-black/50 rounded-md duration-200 hover:cursor-pointer fa-xl fa-light text-white'"
     ></fa-icon>
     <fa-icon 
         [icon]="faXmark"
         (click)="chooseRemoveAll()"
-        [className]="(currentTool === 4 ? 'bg-black/50 ' : '') + 'p-2 hover:bg-black/50 rounded-md duration-200 hover:cursor-pointer fa-xl fa-light text-white'"
+        [className]="(currentTool === 5 ? 'bg-black/50 ' : '') + 'p-2 hover:bg-black/50 rounded-md duration-200 hover:cursor-pointer fa-xl fa-light text-white'"
     ></fa-icon>
 </section>

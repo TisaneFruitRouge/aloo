@@ -16,6 +16,7 @@ export enum Tools {
     Draw,
     Door,
     Window,
+    Square,
     Remove,
     RemoveAll
 }
@@ -90,60 +91,31 @@ class CanvasController {
         this.addNewUndoRedoState();
     }
 
-    /**
-     * Add new state to undo manager
-     */
-    private addNewUndoRedoState() {
-        this.undoManager.addState({ houseState: copyInstanceOfClass(this.house) });
-    }
+    ////////////////////
+    //#region UNDO_REDO
+    ////////////////////
 
     /**
-     * Set the shift key state
-     * @param state State of the shift key (true if pressed, false if not pressed)
+     * Apply a certain state to the canvas
+     * @param house schema of the house to apply
      */
-    public setShift(state: boolean) {
-        this.shiftPressed = state;
-    }
-
-    /**
-     * Draw the grid on the canvas using the given spacing settings
-     */
-    private drawGrid() {
-
-        // Save the current context state
-        this.backgroundContext.save();
-
-        this.backgroundContext.beginPath();
-        this.backgroundContext.setLineDash([5, 5]); // Set the line dash pattern for dotted lines
-        this.backgroundContext.strokeStyle = 'gray';
-
-        // Vertical lines
-        for (let x = 0; x <= this.width; x += this.spacing) {
-            this.backgroundContext.moveTo(x, 0);
-            this.backgroundContext.lineTo(x, this.height);
-        }
-
-        // Horizontal lines
-        for (let y = 0; y <= this.height; y += this.spacing) {
-            this.backgroundContext.moveTo(0, y);
-            this.backgroundContext.lineTo(this.width, y);
-        }
-
-        this.backgroundContext.stroke();
-
-        // Restore the context to its default state
-        this.backgroundContext.restore();
-    }
-
     public applyState(house: House) {
         this.house.walls = house.walls;
+    }
+
+    /**
+    * Add new state to undo manager
+    */
+    private addNewUndoRedoState() {
+        this.undoManager.addState({ houseState: copyInstanceOfClass(this.house) });
     }
 
     /**
      * Undo the last command
      */
     public undo() {
-        this.undoManager.undo();
+        if (!this.undoManager.undo())
+            return;
 
         // if we are in the middle of a ghost line, we need to clear it
         if (this.ghostMode) {
@@ -153,22 +125,27 @@ class CanvasController {
         this.updateAllCanvases();
     }
 
-    private clearStaticCanvas() {
-        this.staticContext.clearRect(0, 0, this.width, this.height);
-    }
-
     /**
      * Redo the last command
      */
     public redo() {
-        this.undoManager.redo();
+        if (!this.undoManager.redo())
+            return;
 
         this.updateAllCanvases();
     }
 
+    ////////////////////
+    //#endregion UNDO_REDO
+    ////////////////////
+
+    ////////////////////
+    //#region CANVAS_DRAWING
+    ////////////////////
+
     /**
-     * Update all the canvases
-     */
+    * Update all the canvases
+    */
     private updateAllCanvases() {
         this.clearStaticCanvas();
         this.updateCanva();
@@ -177,8 +154,15 @@ class CanvasController {
     }
 
     /**
-     * Update the static canvas with the walls
+     * Clear the static canvas
      */
+    private clearStaticCanvas() {
+        this.staticContext.clearRect(0, 0, this.width, this.height);
+    }
+
+    /**
+    * Update the static canvas with the walls
+    */
     public updateCanvaWalls() {
         // drawing the walls
         for (const wall of this.house.walls) {
@@ -213,7 +197,48 @@ class CanvasController {
         }
 
         this.hoverOnElement(this.mouseX, this.mouseY);
-        console.log(this.house.walls)
+    }
+
+    /**
+    * Draw the grid on the canvas using the given spacing settings
+    */
+    private drawGrid() {
+
+        // Save the current context state
+        this.backgroundContext.save();
+
+        this.backgroundContext.beginPath();
+        this.backgroundContext.setLineDash([5, 5]); // Set the line dash pattern for dotted lines
+        this.backgroundContext.strokeStyle = 'gray';
+
+        // Vertical lines
+        for (let x = 0; x <= this.width; x += this.spacing) {
+            this.backgroundContext.moveTo(x, 0);
+            this.backgroundContext.lineTo(x, this.height);
+        }
+
+        // Horizontal lines
+        for (let y = 0; y <= this.height; y += this.spacing) {
+            this.backgroundContext.moveTo(0, y);
+            this.backgroundContext.lineTo(this.width, y);
+        }
+
+        this.backgroundContext.stroke();
+
+        // Restore the context to its default state
+        this.backgroundContext.restore();
+    }
+
+    ////////////////////
+    //#endregion CANVAS_DRAWING
+    ////////////////////
+
+    /**
+     * Set the shift key state
+     * @param state State of the shift key (true if pressed, false if not pressed)
+     */
+    public setShift(state: boolean) {
+        this.shiftPressed = state;
     }
 
     /**
@@ -239,8 +264,57 @@ class CanvasController {
                 this.removeAll();
                 break;
         }
-        // Add the current state to the undo stack
-        this.addNewUndoRedoState();
+    }
+
+    public handleMouseDown(x: number, y: number) {
+        // check if mouse is not on the toolbar and is on the canvas
+        if (y < 100) {
+            return;
+        }
+        if (this.currentTool == Tools.Square) {
+            // Create a ghost square starting from last point to the current mouse position
+            this.ghostMode = true;
+            this.lastPoint = new Point(x, y);
+
+            this.updateCanvaWalls();
+        }
+    }
+
+    public handleMouseUp(x: number, y: number) {
+        if (this.currentTool === Tools.Square && this.lastPoint !== null) {
+            // Create a square from the starting point to the current mouse position
+            const endSquarePoint = new Point(x, y);
+            const squareWalls = this.createSquareWalls(this.lastPoint, endSquarePoint);
+
+            // Add the square walls to the house
+            this.house.walls.push(...squareWalls);
+
+            // Reset the state
+            this.ghostMode = false;
+            this.addNewUndoRedoState();
+            this.lastPoint = null;
+
+            this.updateCanvaWalls();
+        }
+    }
+
+    private createSquareWalls(startPoint: Point, endPoint: Point): Wall[] {
+        const x1 = startPoint.getX();
+        const y1 = startPoint.getY();
+        const x2 = endPoint.getX();
+        const y2 = endPoint.getY();
+
+        const topLeft = new Point(x1, y1);
+        const topRight = new Point(x2, y1);
+        const bottomRight = new Point(x2, y2);
+        const bottomLeft = new Point(x1, y2);
+
+        const wall1 = new Wall(topLeft, topRight);
+        const wall2 = new Wall(topRight, bottomRight);
+        const wall3 = new Wall(bottomRight, bottomLeft);
+        const wall4 = new Wall(bottomLeft, topLeft);
+
+        return [wall1, wall2, wall3, wall4];
     }
 
     /**
@@ -287,13 +361,13 @@ class CanvasController {
 
             const newWall = new Wall(this.lastPoint, newPoint);
             this.house.walls.push(newWall);
+            this.addNewUndoRedoState();
 
             if (newPoint === this.hoveredElement) {
                 this.lastPoint = null;
             } else {
                 this.lastPoint = newPoint;
             }
-
         } else {
             if (this.hoveredElement !== null && this.hoveredElement instanceof Point) { // the new point is an existing point
                 this.lastPoint = this.hoveredElement;
@@ -311,7 +385,6 @@ class CanvasController {
      * @param y mouse y position
      */
     private clickWithDoor(x: number, y: number) {
-
     }
 
     /**
@@ -321,7 +394,8 @@ class CanvasController {
      */
     private clickWithWindow(x: number, y: number) {
         if (this.windowClosestWall !== null && this.ghostWindow !== null) {
-            this.windowClosestWall.addWindow(this.ghostWindow)
+            this.windowClosestWall.addWindow(this.ghostWindow);
+            this.addNewUndoRedoState();
         }
     }
 
@@ -342,10 +416,11 @@ class CanvasController {
                     ) {
                         preservedWalls.push(wall)
                     }
-                    
+
                 }
                 this.house.walls = preservedWalls;
                 this.updateAllCanvases();
+                this.addNewUndoRedoState();
             } else if (this.hoveredElement instanceof Wall) {
 
             } else if (this.hoveredElement instanceof Door) {
@@ -366,6 +441,7 @@ class CanvasController {
         this.ghostWindow = null;
         this.windowClosestWall = null;
         this.updateAllCanvases();
+        this.addNewUndoRedoState();
     }
 
     /**
@@ -400,12 +476,30 @@ class CanvasController {
 
         let point = mousePoint
 
-        if (this.shiftPressed) {
-            const al = determineAlignment(mousePoint, this.lastPoint)
-            point = createAlignedPoints(mousePoint, this.lastPoint, al)[0]
-        }
+        if (this.currentTool === Tools.Square) {
+            // if it's the square tool, we need to draw a square from the last point to the current mouse position
+            point = this.lastPoint;
 
-        drawLine(this.interactiveContext, point, this.lastPoint);
+            const endSquarePoint = new Point(mouseX, mouseY);
+
+            // @TODO: If the shift key is pressed, we need to create a square with the same width and height
+
+            const squareWalls = this.createSquareWalls(this.lastPoint, endSquarePoint);
+
+            for (const wall of squareWalls) {
+                wall.draw(this.interactiveContext);
+            }
+        } else {
+            // for other tools, we need to draw a line from the last point to the current mouse position
+
+            // if the shift key is pressed, we need to align the line horizontally or vertically
+            if (this.shiftPressed) {
+                const al = determineAlignment(mousePoint, this.lastPoint)
+                point = createAlignedPoints(mousePoint, this.lastPoint, al)[0]
+            }
+
+            drawLine(this.interactiveContext, point, this.lastPoint);
+        }
     }
 
     /**
