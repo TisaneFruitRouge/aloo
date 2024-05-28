@@ -394,12 +394,9 @@ class CanvasController {
      * @param y mouse y position
      */
     private clickWithDoor(x: number, y: number) {
-<<<<<<< HEAD
-=======
         if (this.doorClosestWall !== null && this.ghostDoor !== null) {
             this.doorClosestWall.addDoor(this.ghostDoor)
         }
->>>>>>> 5b53c9a (Adding doors)
     }
 
     /**
