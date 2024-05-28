@@ -3,24 +3,19 @@ import { Point } from "./point";
 import { Door } from "./door";
 import { Window } from "./window";
 import { drawLine } from "../app/lib/utils";
-import { Material } from "./material";
 import { getDistanceFromLine } from "../app/lib/geomerty";
 
 export class Wall extends StructuralElement {
     private doors: Array<Door>;
     private windows: Array<Window>
-    private wallMaterial: Material;
 
     public constructor(
         A: Point,
-        B: Point,
-        wallMaterialType: string,
-        wallColor: string
+        B: Point
     ) {
         super(A, B, 5); // CHANGER LA VALEUR PAR DEFAUT
         this.doors = new Array<Door>();
         this.windows = new Array<Window>();
-        this.wallMaterial = new Material(wallMaterialType, wallColor);
     }
 
     static findClosestWallToPoint(point: Point, walls: Wall[]): Wall | null {
@@ -43,7 +38,6 @@ export class Wall extends StructuralElement {
                 closestWall = wall;
             }
         }
-
         return closestWall;
     }
 

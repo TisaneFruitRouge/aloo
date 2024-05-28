@@ -1,47 +1,16 @@
 import { WIDTH } from '../app/lib/constants';
 import { InsetElement } from './inset-element';
-import { Material } from './material';
 import { Point } from './point';
 
 export class Window extends InsetElement {
-    private numberOfPanes: number; // Nouvelle propriété pour le nombre de vitres
-    private glazingType: string; // par exemple 'double', 'triple'
-    private frameMaterial: Material;
     private isOpen: boolean;
 
     constructor(
         length: number,
-        center: Point,
-        numberOfPanes: number,
-        glazingType: string,
-        frameMaterialType: string,
-        frameColor: string
+        center: Point
     ) {
         super(length, center, 5); // CHANGER LA VALEUR PAR DEFAUT
-        this.numberOfPanes = numberOfPanes;
-        this.glazingType = glazingType;
-        this.frameMaterial = new Material(frameMaterialType, frameColor);
         this.isOpen = false;
-    }
-
-    public getNumberOfPanes(): number {
-        return this.numberOfPanes;
-    }
-
-    public getGlazingType(): string {
-        return this.glazingType;
-    }
-
-    public getFrameMaterial(): Material {
-        return this.frameMaterial;
-    }
-
-    public setNumberOfPanes(numberOfPanes: number) {
-        this.numberOfPanes = numberOfPanes;
-    }
-
-    public setGlazingType(glazingType: string) {
-        this.glazingType = glazingType;
     }
 
     public toggleWindow() {
@@ -51,7 +20,7 @@ export class Window extends InsetElement {
     public draw(context: CanvasRenderingContext2D, wallAPoint: Point, wallBPoint: Point, forceHover?: boolean) {
         context.save();
 
-        const color = (this.getHoveredState() || forceHover) ? 'gray' : '#EEEEEE'
+        const color = (this.getHoveredState() || forceHover) ? 'gray' : 'red'
 
         context.strokeStyle = color;
         context.lineWidth = WIDTH;
@@ -67,11 +36,16 @@ export class Window extends InsetElement {
         const endX = centerX + halfLength;
         const y = centerY;
 
+        const p1 = new Point(startX, y);
+        const p2 = new Point(endX, y);
+
         context.translate(centerX, centerY);
         context.rotate(rotation); // Apply rotation
         context.translate(-centerX, -centerY);
         
-        this.getCenter().draw(context, color);
+        p1.draw(context, "red");
+        p2.draw(context, "red");
+
         context.beginPath();
         context.moveTo(startX, y);
         context.lineTo(endX, y);

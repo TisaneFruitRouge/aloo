@@ -233,13 +233,13 @@ class CanvasController {
                         );
         
                         if (intersection !== null && canvaController.lastPoint.id !== intersection.getId()) {
-                            const newWall = new Wall(canvaController.lastPoint, newPoint, "basic", "#FFFFFF");
+                            const newWall = new Wall(canvaController.lastPoint, newPoint);
                             this.lastPoint = intersection;
                             this.house.walls.push(newWall);
                         }
                     }
         
-                    const newWall = new Wall(canvaController.lastPoint, newPoint, "basic", "#FFFFFF");
+                    const newWall = new Wall(canvaController.lastPoint, newPoint);
                     this.house.walls.push(newWall);
         
                     if (newPoint === this.hoveredElement) {
@@ -394,7 +394,6 @@ class CanvasController {
         }
 
         if (hoverableElement instanceof Wall) {
-            hoverableElement
         }
 
         hoverableElement.setHoveredState(true);
@@ -439,7 +438,7 @@ class CanvasController {
             const closestWall = Wall.findClosestWallToPoint(new Point(mouseX, mouseY), this.house.walls);
             if (closestWall !== null) {
                 const closestPoint = Wall.findClosestPointOnWall(new Point(mouseX, mouseY), closestWall);
-                const ghostWindow = new Window(100, closestPoint, 2, "normal", "normal", "#FFFFFF");
+                const ghostWindow = new Window(100, closestPoint);
                 
                 const distanceA = getDistance(
                     closestPoint.getX(), 
@@ -455,7 +454,7 @@ class CanvasController {
                     closestWall.getSegment()[1].getY()
                 )
 
-                if (distanceA >= 50 && distanceB >= 50) {
+                if ((distanceA >= 50 && distanceB >= 50) || false) {
                     this.ghostWindow = ghostWindow;
                     this.windowClosestWall = closestWall;
                     this.ghostWindow.draw(
