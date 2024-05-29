@@ -3,7 +3,6 @@ import { Point } from "./point";
 import { Door } from "./door";
 import { Window } from "./window";
 import { drawLine } from "../app/lib/utils";
-import { getDistanceFromLine } from "../app/lib/geomerty";
 
 export class Wall extends StructuralElement {
     private doors: Array<Door>;
@@ -70,6 +69,13 @@ export class Wall extends StructuralElement {
 
         return isXInRange && isYInRange;
     }
+
+    getDoorsCount(): number {
+        if (this.doors === undefined) {
+            return 0;
+        }
+        return this.doors.length;
+    }
     
 
     addDoor(door: Door): void {
@@ -78,6 +84,13 @@ export class Wall extends StructuralElement {
 
     removeDoor(door: Door): void {
         this.doors = this.doors.filter(d => d !== door);
+    }
+
+    getWindowsCount(): number {
+        if (this.windows === undefined) {
+            return 0;
+        }
+        return this.windows.length;
     }
 
     addWindow(window: Window): void {

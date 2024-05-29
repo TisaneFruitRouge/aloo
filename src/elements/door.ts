@@ -41,6 +41,12 @@ export class Door extends InsetElement {
         context.lineTo(endX, y);
         context.stroke();    
 
+        const doorAngle = Math.PI / 2; // Adjust as needed
+        context.beginPath();
+        context.arc(centerX + halfLength, centerY + 5, this.getLength(), Math.PI, Math.PI + doorAngle);
+        context.lineTo(centerX + halfLength, centerY + 5); // Close the path
+        context.stroke();
+
         context.restore();
     }
 }
