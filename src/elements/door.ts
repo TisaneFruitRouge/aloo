@@ -15,7 +15,7 @@ export class Door extends InsetElement {
     public draw(context: CanvasRenderingContext2D, wallAPoint: Point, wallBPoint: Point, forceHover?: boolean) {
         context.save();
 
-        const color = (this.getHoveredState() || forceHover) ? 'gray' : '#EEEEEE'
+        const color = (this.getHoveredState() || forceHover) ? '#BC5F04' : '#874000'
 
         context.strokeStyle = color;
         context.lineWidth = WIDTH;

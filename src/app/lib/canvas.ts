@@ -394,10 +394,20 @@ class CanvasController {
      * @param y mouse y position
      */
     private clickWithDoor(x: number, y: number) {
-        if (this.doorClosestWall !== null && this.ghostDoor !== null) {
-            this.doorClosestWall.addDoor(this.ghostDoor)
-            this.addNewUndoRedoState();
+        if (this.ghostDoor === null) {
+            return;
         }
+
+        if (this.doorClosestWall === null) {
+            return;
+        }
+
+        if (this.house.checkCollisionWithInsetElement(this.ghostDoor)) {
+            return;
+        }
+
+        this.doorClosestWall.addDoor(this.ghostDoor)
+        this.addNewUndoRedoState();
     }
 
     /**
@@ -406,10 +416,21 @@ class CanvasController {
      * @param y mouse y position
      */
     private clickWithWindow(x: number, y: number) {
-        if (this.windowClosestWall !== null && this.ghostWindow !== null) {
-            this.windowClosestWall.addWindow(this.ghostWindow);
-            this.addNewUndoRedoState();
+        if (this.ghostWindow === null) {
+            return;
         }
+
+        if (this.windowClosestWall === null) {
+            return;
+        }
+
+        if (this.house.checkCollisionWithInsetElement(this.ghostWindow)) {
+            return;
+        }
+
+        this.windowClosestWall.addWindow(this.ghostWindow);
+        this.addNewUndoRedoState();
+        
     }
 
     /**
