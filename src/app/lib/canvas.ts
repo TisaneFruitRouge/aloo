@@ -7,6 +7,8 @@ import { HOVERING_DISTANCE } from "./constants";
 import { createAlignedPoints, determineAlignment, findIntersectionPoint, getDistance, getDistanceFromLine } from "./geomerty";
 import { copyInstanceOfClass, drawLine } from "./utils";
 import { UndoRedo } from "./undo-redo";
+import { TipsService } from '../tips/tips.service';
+
 
 /**
  * Enum for the different tools available in the application
@@ -78,7 +80,7 @@ class CanvasController {
     private spacing = 100;
 
     public constructor(backgroundContext: CanvasRenderingContext2D, interactiveContext: CanvasRenderingContext2D,
-        staticContext: CanvasRenderingContext2D, width: number, height: number) {
+        staticContext: CanvasRenderingContext2D, width: number, height: number, private tipsService: TipsService) {
 
         this.backgroundContext = backgroundContext;
         this.interactiveContext = interactiveContext;
@@ -93,6 +95,11 @@ class CanvasController {
 
         this.undoManager = new UndoRedo(this);
         this.addNewUndoRedoState();
+        this.updateTips("Welcome to the DoodoolHouse application! Start by drawing the walls of your house using the Draw tool. Use Ctrl+Z to undo and Ctrl+Y to redo.");
+    }
+
+    private updateTips(text: string) {
+        this.tipsService.updateTipText(text);
     }
 
     ////////////////////
@@ -475,6 +482,7 @@ class CanvasController {
         this.ghostWindow = null;
         this.windowClosestWall = null;
         this.updateAllCanvases();
+        this.updateTips("All elements have been removed from the canvas.");
         this.addNewUndoRedoState();
     }
 
@@ -483,6 +491,7 @@ class CanvasController {
      * @param tool Tool to set as the current tool
      */
     public setCurrentTool(tool: Tools) {
+        this.tipsService.updateTipTextForTool(tool);
         this.currentTool = tool;
         this.lastPoint = null;
         this.ghostMode = false;

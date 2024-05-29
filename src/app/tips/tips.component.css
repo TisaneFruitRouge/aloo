@@ -1,0 +1,20 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+.transparent-window {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 10v;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.8);
+    /* Semi-transparent black background */
+    color: rgb(200, 200, 200);
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    font-size: 14px;
+    z-index: 1000000;
+}
