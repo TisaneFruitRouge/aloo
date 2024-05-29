@@ -542,7 +542,44 @@ class CanvasController {
             }
 
             drawLine(this.interactiveContext, point, this.lastPoint);
+            this.drawLengthIndication(this.interactiveContext, mousePoint, point, this.lastPoint);
         }
+    }
+
+    /**
+     * Draw the distance between two points on the canvas
+     * @param context       Canvas context to draw on
+     * @param mousePoint    Mouse point
+     * @param A             Point A of the wall
+     * @param B             Point B of the wall
+     */
+    private drawLengthIndication(context: CanvasRenderingContext2D, mousePoint: Point, A: Point, B: Point) {
+        context.save();
+
+        // Calculate the distance between the two points
+        const distance = Math.sqrt(Math.pow(A.getX() - B.getX(), 2) + Math.pow(A.getY() - B.getY(), 2));
+
+        // Format the distance to a fixed number of decimal places
+        const distanceText = distance.toFixed(2);
+
+        // Determine the position for the distance text
+        const textX = mousePoint.getX();
+        const textY = mousePoint.getY() - 20;
+        // Set the text style
+        context.font = '16px Arial';
+        context.textAlign = 'center'; // Center the text horizontally
+        context.textBaseline = 'middle'; // Center the text vertically
+
+        // Draw the text outline
+        context.strokeStyle = 'black';
+        context.lineWidth = 3;
+        context.strokeText(`${distanceText}`, textX, textY);
+
+        // Draw the filled text
+        context.fillStyle = 'white';
+        context.fillText(`${distanceText}`, textX, textY);
+
+        context.restore();
     }
 
     /**
