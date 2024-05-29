@@ -91,7 +91,11 @@ class CanvasController {
 
         this.undoManager = new UndoRedo(this);
         this.addNewUndoRedoState();
-        this.tipsService.updateTipText("This is a testttt");
+        this.updateTips("Welcome to the DoodoolHouse application! Start by drawing the walls of your house using the Draw tool.");
+    }
+
+    private updateTips(text: string) {
+        this.tipsService.updateTipText(text);
     }
 
     ////////////////////
