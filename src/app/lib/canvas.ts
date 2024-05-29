@@ -57,6 +57,10 @@ class CanvasController {
     private ghostWindow: Window | null = null;
     private windowClosestWall: Wall | null = null;
 
+    // the ghost window element to draw if the window tools is selected
+    private ghostDoor: Door | null = null;
+    private doorClosestWall: Wall | null = null;
+
     // The tool that is currently selected
     private currentTool: Tools = Tools.Draw;
 
@@ -203,6 +207,10 @@ class CanvasController {
             this.drawWindowGhost(this.mouseX, this.mouseY)
         }
 
+        if (this.currentTool === Tools.Door) {
+            this.drawDoorGhost(this.mouseX, this.mouseY)
+        }
+
         this.hoverOnElement(this.mouseX, this.mouseY);
     }
 
@@ -254,7 +262,6 @@ class CanvasController {
      * @param y mouse y position
      */
     public handleClick(x: number, y: number) {
-        let shouldAddNewUndoRedoState = true;
         switch (this.currentTool) {
             case Tools.Draw:
                 this.clickWithDraw(x, y);
@@ -271,23 +278,18 @@ class CanvasController {
             case Tools.RemoveAll:
                 this.removeAll();
                 break;
-            default:
-                shouldAddNewUndoRedoState = false;
-                break;
         }
-
-        // Add the new state to the undo manager
-        if (shouldAddNewUndoRedoState)
-            this.addNewUndoRedoState();
     }
 
     public handleMouseDown(x: number, y: number) {
+        // check if mouse is not on the toolbar and is on the canvas
+        if (y < 100) {
+            return;
+        }
         if (this.currentTool == Tools.Square) {
             // Create a ghost square starting from last point to the current mouse position
             this.ghostMode = true;
             this.lastPoint = new Point(x, y);
-
-            this.addNewUndoRedoState();
 
             this.updateCanvaWalls();
         }
@@ -361,6 +363,7 @@ class CanvasController {
                     wall.getSegment()[1]
                 );
 
+                // if the last point is the same as one of the wall points, we skip the wall
                 if (this.lastPoint.getId() === wall.getSegment()[0].getId() || this.lastPoint.getId() === wall.getSegment()[1].getId()) {
                     continue;
                 }
@@ -374,6 +377,7 @@ class CanvasController {
 
             const newWall = new Wall(this.lastPoint, newPoint);
             this.house.walls.push(newWall);
+            this.addNewUndoRedoState();
 
             if (newPoint === this.hoveredElement) {
                 this.lastPoint = null;
@@ -397,6 +401,20 @@ class CanvasController {
      * @param y mouse y position
      */
     private clickWithDoor(x: number, y: number) {
+        if (this.ghostDoor === null) {
+            return;
+        }
+
+        if (this.doorClosestWall === null) {
+            return;
+        }
+
+        if (this.house.checkCollisionWithInsetElement(this.ghostDoor)) {
+            return;
+        }
+
+        this.doorClosestWall.addDoor(this.ghostDoor)
+        this.addNewUndoRedoState();
     }
 
     /**
@@ -405,9 +423,21 @@ class CanvasController {
      * @param y mouse y position
      */
     private clickWithWindow(x: number, y: number) {
-        if (this.windowClosestWall !== null && this.ghostWindow !== null) {
-            this.windowClosestWall.addWindow(this.ghostWindow)
+        if (this.ghostWindow === null) {
+            return;
         }
+
+        if (this.windowClosestWall === null) {
+            return;
+        }
+
+        if (this.house.checkCollisionWithInsetElement(this.ghostWindow)) {
+            return;
+        }
+
+        this.windowClosestWall.addWindow(this.ghostWindow);
+        this.addNewUndoRedoState();
+        
     }
 
     /**
@@ -431,6 +461,7 @@ class CanvasController {
                 }
                 this.house.walls = preservedWalls;
                 this.updateAllCanvases();
+                this.addNewUndoRedoState();
             } else if (this.hoveredElement instanceof Wall) {
 
             } else if (this.hoveredElement instanceof Door) {
@@ -452,6 +483,7 @@ class CanvasController {
         this.windowClosestWall = null;
         this.updateAllCanvases();
         this.updateTips("All elements have been removed from the canvas.");
+        this.addNewUndoRedoState();
     }
 
     /**
@@ -604,6 +636,46 @@ class CanvasController {
                     this.ghostWindow = ghostWindow;
                     this.windowClosestWall = closestWall;
                     this.ghostWindow.draw(
+                        this.interactiveContext,
+                        closestWall.getSegment()[0],
+                        closestWall.getSegment()[1],
+                        true
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * Draw a ghost window on the wall closest to the mouse (to help user place the window)
+     * @param mouseX mouse x position
+     * @param mouseY mouse y position
+     */
+    private drawDoorGhost(mouseX: number, mouseY: number) {
+        if (this.house.walls.length > 0) {
+            const closestWall = Wall.findClosestWallToPoint(new Point(mouseX, mouseY), this.house.walls);
+            if (closestWall !== null) {
+                const closestPoint = Wall.findClosestPointOnWall(new Point(mouseX, mouseY), closestWall);
+                const ghostDoor = new Door(100, closestPoint, 5);
+
+                const distanceA = getDistance(
+                    closestPoint.getX(),
+                    closestPoint.getY(),
+                    closestWall.getSegment()[0].getX(),
+                    closestWall.getSegment()[0].getY()
+                )
+
+                const distanceB = getDistance(
+                    closestPoint.getX(),
+                    closestPoint.getY(),
+                    closestWall.getSegment()[1].getX(),
+                    closestWall.getSegment()[1].getY()
+                )
+
+                if (distanceA >= 50 && distanceB >= 50 && Wall.isPointInsideWall(closestPoint, closestWall)) {
+                    this.ghostDoor = ghostDoor;
+                    this.doorClosestWall = closestWall;
+                    this.ghostDoor.draw(
                         this.interactiveContext,
                         closestWall.getSegment()[0],
                         closestWall.getSegment()[1],
