@@ -7,6 +7,8 @@ import { HOVERING_DISTANCE } from "./constants";
 import { createAlignedPoints, determineAlignment, findIntersectionPoint, getDistance, getDistanceFromLine } from "./geomerty";
 import { copyInstanceOfClass, drawLine } from "./utils";
 import { UndoRedo } from "./undo-redo";
+import { TipsService } from '../tips/tips.service';
+
 
 /**
  * Enum for the different tools available in the application
@@ -74,7 +76,7 @@ class CanvasController {
     private spacing = 100;
 
     public constructor(backgroundContext: CanvasRenderingContext2D, interactiveContext: CanvasRenderingContext2D,
-        staticContext: CanvasRenderingContext2D, width: number, height: number) {
+        staticContext: CanvasRenderingContext2D, width: number, height: number, private tipsService: TipsService) {
 
         this.backgroundContext = backgroundContext;
         this.interactiveContext = interactiveContext;
@@ -89,6 +91,7 @@ class CanvasController {
 
         this.undoManager = new UndoRedo(this);
         this.addNewUndoRedoState();
+        this.tipsService.updateTipText("This is a testttt");
     }
 
     ////////////////////

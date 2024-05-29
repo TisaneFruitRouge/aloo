@@ -6,6 +6,9 @@ import { CanvaComponent } from './canva/canva.component';
 import { ToolboxComponent } from './toolbox/toolbox.component';
 import CanvasController from './lib/canvas';
 
+import { TipsComponent } from './tips/tips.component';
+import { TipsService } from './tips/tips.service';
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -14,12 +17,14 @@ import CanvasController from './lib/canvas';
     RouterOutlet, 
     CanvaComponent, 
     ToolboxComponent,
+    TipsComponent
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements AfterViewInit {
   title = 'aloo';
+  tipService: TipsService = new TipsService();
 
   public canvasController!: CanvasController;
 
@@ -41,7 +46,7 @@ export class AppComponent implements AfterViewInit {
         staticCanvas.width = window.innerWidth;
         staticCanvas.height = window.innerHeight;
 
-        this.canvasController = new CanvasController(gridContext, interactiveContext, staticContext, window.innerWidth, window.innerHeight);
+        this.canvasController = new CanvasController(gridContext, interactiveContext, staticContext, window.innerWidth, window.innerHeight, this.tipService);
       } else {
         console.error('Failed to get drawing context for the canvases');
       }
