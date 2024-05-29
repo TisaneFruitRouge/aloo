@@ -25,11 +25,13 @@ export class UndoRedo {
      * @returns true if the undo was successful, false otherwise
      */
     public undo(): boolean {
+        console.log('before undo: ', this.pointer, this.undoStack.length, this.undoStack.at(this.pointer), 'undoStack: ', this.undoStack);
         if (this.pointer - 1 >= 0) {
             this.pointer--;
             const state = this.undoStack.at(this.pointer);
             if (state) {
                 this.applyState(state);
+                console.log('after undo: ', this.pointer, this.undoStack.length, this.undoStack.at(this.pointer), 'undoStack: ', this.undoStack)
                 return true;
             }
             else
@@ -44,11 +46,13 @@ export class UndoRedo {
      * @returns true if the redo was successful, false otherwise
      */
     public redo(): boolean {
+        console.log('before redo: ', this.pointer, this.undoStack.length, this.undoStack.at(this.pointer), 'undoStack: ', this.undoStack);
         if (this.pointer < this.undoStack.length - 1) {
             this.pointer++;
             const state = this.undoStack.at(this.pointer);
             if (state) {
                 this.applyState(state);
+                console.log('after redo: ', this.pointer, this.undoStack.length, this.undoStack.at(this.pointer), 'undoStack: ', this.undoStack);
                 return true;
             }
             else
@@ -71,9 +75,11 @@ export class UndoRedo {
         // otherwise we remove the states after the current pointer
         if (this.pointer !== this.undoStack.length - 1)
             this.undoStack.splice(this.pointer, this.undoStack.length - this.pointer);
+        else
+            this.pointer++;
 
-        this.pointer++;
         this.undoStack.push(state);
+        console.log('after addState: ', this.pointer, this.undoStack.length, this.undoStack.at(this.pointer), 'undoStack: ', this.undoStack);
     }
 
     /**
