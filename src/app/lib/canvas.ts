@@ -91,7 +91,7 @@ class CanvasController {
 
         this.undoManager = new UndoRedo(this);
         this.addNewUndoRedoState();
-        this.updateTips("Welcome to the DoodoolHouse application! Start by drawing the walls of your house using the Draw tool.");
+        this.updateTips("Welcome to the DoodoolHouse application! Start by drawing the walls of your house using the Draw tool. Use Ctrl+Z to undo and Ctrl+Y to redo.");
     }
 
     private updateTips(text: string) {
@@ -451,6 +451,7 @@ class CanvasController {
         this.ghostWindow = null;
         this.windowClosestWall = null;
         this.updateAllCanvases();
+        this.updateTips("All elements have been removed from the canvas.");
     }
 
     /**
@@ -458,6 +459,7 @@ class CanvasController {
      * @param tool Tool to set as the current tool
      */
     public setCurrentTool(tool: Tools) {
+        this.tipsService.updateTipTextForTool(tool);
         this.currentTool = tool;
         this.lastPoint = null;
         this.ghostMode = false;
