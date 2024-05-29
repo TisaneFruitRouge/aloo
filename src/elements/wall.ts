@@ -77,6 +77,9 @@ export class Wall extends StructuralElement {
         return this.doors.length;
     }
     
+    getDoors() {
+        return this.doors;
+    }
 
     addDoor(door: Door): void {
         this.doors.push(door);
@@ -91,6 +94,10 @@ export class Wall extends StructuralElement {
             return 0;
         }
         return this.windows.length;
+    }
+
+    getWindows() {
+        return this.windows;
     }
 
     addWindow(window: Window): void {
@@ -113,7 +120,7 @@ export class Wall extends StructuralElement {
         context.restore();
 
         for (const door of this.doors) {
-            door.draw(context);
+            door.draw(context, this.getSegment()[0], this.getSegment()[1]);
         }
 
         for (const window of this.windows) {

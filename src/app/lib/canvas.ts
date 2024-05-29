@@ -7,6 +7,8 @@ import { HOVERING_DISTANCE } from "./constants";
 import { createAlignedPoints, determineAlignment, findIntersectionPoint, getDistance, getDistanceFromLine } from "./geomerty";
 import { copyInstanceOfClass, drawLine } from "./utils";
 import { UndoRedo } from "./undo-redo";
+import { TipsService } from '../tips/tips.service';
+
 
 /**
  * Enum for the different tools available in the application
@@ -55,6 +57,10 @@ class CanvasController {
     private ghostWindow: Window | null = null;
     private windowClosestWall: Wall | null = null;
 
+    // the ghost window element to draw if the window tools is selected
+    private ghostDoor: Door | null = null;
+    private doorClosestWall: Wall | null = null;
+
     // The tool that is currently selected
     private currentTool: Tools = Tools.Draw;
 
@@ -74,7 +80,7 @@ class CanvasController {
     private spacing = 100;
 
     public constructor(backgroundContext: CanvasRenderingContext2D, interactiveContext: CanvasRenderingContext2D,
-        staticContext: CanvasRenderingContext2D, width: number, height: number) {
+        staticContext: CanvasRenderingContext2D, width: number, height: number, private tipsService: TipsService) {
 
         this.backgroundContext = backgroundContext;
         this.interactiveContext = interactiveContext;
@@ -89,6 +95,11 @@ class CanvasController {
 
         this.undoManager = new UndoRedo(this);
         this.addNewUndoRedoState();
+        this.updateTips("Welcome to the DoodoolHouse application! Start by drawing the walls of your house using the Draw tool. Use Ctrl+Z to undo and Ctrl+Y to redo.");
+    }
+
+    private updateTips(text: string) {
+        this.tipsService.updateTipText(text);
     }
 
     ////////////////////
@@ -194,6 +205,10 @@ class CanvasController {
 
         if (this.currentTool === Tools.Window) {
             this.drawWindowGhost(this.mouseX, this.mouseY)
+        }
+
+        if (this.currentTool === Tools.Door) {
+            this.drawDoorGhost(this.mouseX, this.mouseY)
         }
 
         this.hoverOnElement(this.mouseX, this.mouseY);
@@ -348,6 +363,7 @@ class CanvasController {
                     wall.getSegment()[1]
                 );
 
+                // if the last point is the same as one of the wall points, we skip the wall
                 if (this.lastPoint.getId() === wall.getSegment()[0].getId() || this.lastPoint.getId() === wall.getSegment()[1].getId()) {
                     continue;
                 }
@@ -385,6 +401,20 @@ class CanvasController {
      * @param y mouse y position
      */
     private clickWithDoor(x: number, y: number) {
+        if (this.ghostDoor === null) {
+            return;
+        }
+
+        if (this.doorClosestWall === null) {
+            return;
+        }
+
+        if (this.house.checkCollisionWithInsetElement(this.ghostDoor)) {
+            return;
+        }
+
+        this.doorClosestWall.addDoor(this.ghostDoor)
+        this.addNewUndoRedoState();
     }
 
     /**
@@ -393,10 +423,21 @@ class CanvasController {
      * @param y mouse y position
      */
     private clickWithWindow(x: number, y: number) {
-        if (this.windowClosestWall !== null && this.ghostWindow !== null) {
-            this.windowClosestWall.addWindow(this.ghostWindow);
-            this.addNewUndoRedoState();
+        if (this.ghostWindow === null) {
+            return;
         }
+
+        if (this.windowClosestWall === null) {
+            return;
+        }
+
+        if (this.house.checkCollisionWithInsetElement(this.ghostWindow)) {
+            return;
+        }
+
+        this.windowClosestWall.addWindow(this.ghostWindow);
+        this.addNewUndoRedoState();
+        
     }
 
     /**
@@ -441,6 +482,7 @@ class CanvasController {
         this.ghostWindow = null;
         this.windowClosestWall = null;
         this.updateAllCanvases();
+        this.updateTips("All elements have been removed from the canvas.");
         this.addNewUndoRedoState();
     }
 
@@ -449,6 +491,7 @@ class CanvasController {
      * @param tool Tool to set as the current tool
      */
     public setCurrentTool(tool: Tools) {
+        this.tipsService.updateTipTextForTool(tool);
         this.currentTool = tool;
         this.lastPoint = null;
         this.ghostMode = false;
@@ -499,7 +542,44 @@ class CanvasController {
             }
 
             drawLine(this.interactiveContext, point, this.lastPoint);
+            this.drawLengthIndication(this.interactiveContext, mousePoint, point, this.lastPoint);
         }
+    }
+
+    /**
+     * Draw the distance between two points on the canvas
+     * @param context       Canvas context to draw on
+     * @param mousePoint    Mouse point
+     * @param A             Point A of the wall
+     * @param B             Point B of the wall
+     */
+    private drawLengthIndication(context: CanvasRenderingContext2D, mousePoint: Point, A: Point, B: Point) {
+        context.save();
+
+        // Calculate the distance between the two points
+        const distance = Math.sqrt(Math.pow(A.getX() - B.getX(), 2) + Math.pow(A.getY() - B.getY(), 2));
+
+        // Format the distance to a fixed number of decimal places
+        const distanceText = distance.toFixed(2);
+
+        // Determine the position for the distance text
+        const textX = mousePoint.getX();
+        const textY = mousePoint.getY() - 20;
+        // Set the text style
+        context.font = '16px Arial';
+        context.textAlign = 'center'; // Center the text horizontally
+        context.textBaseline = 'middle'; // Center the text vertically
+
+        // Draw the text outline
+        context.strokeStyle = 'black';
+        context.lineWidth = 3;
+        context.strokeText(`${distanceText}`, textX, textY);
+
+        // Draw the filled text
+        context.fillStyle = 'white';
+        context.fillText(`${distanceText}`, textX, textY);
+
+        context.restore();
     }
 
     /**
@@ -593,6 +673,46 @@ class CanvasController {
                     this.ghostWindow = ghostWindow;
                     this.windowClosestWall = closestWall;
                     this.ghostWindow.draw(
+                        this.interactiveContext,
+                        closestWall.getSegment()[0],
+                        closestWall.getSegment()[1],
+                        true
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * Draw a ghost window on the wall closest to the mouse (to help user place the window)
+     * @param mouseX mouse x position
+     * @param mouseY mouse y position
+     */
+    private drawDoorGhost(mouseX: number, mouseY: number) {
+        if (this.house.walls.length > 0) {
+            const closestWall = Wall.findClosestWallToPoint(new Point(mouseX, mouseY), this.house.walls);
+            if (closestWall !== null) {
+                const closestPoint = Wall.findClosestPointOnWall(new Point(mouseX, mouseY), closestWall);
+                const ghostDoor = new Door(100, closestPoint, 5);
+
+                const distanceA = getDistance(
+                    closestPoint.getX(),
+                    closestPoint.getY(),
+                    closestWall.getSegment()[0].getX(),
+                    closestWall.getSegment()[0].getY()
+                )
+
+                const distanceB = getDistance(
+                    closestPoint.getX(),
+                    closestPoint.getY(),
+                    closestWall.getSegment()[1].getX(),
+                    closestWall.getSegment()[1].getY()
+                )
+
+                if (distanceA >= 50 && distanceB >= 50 && Wall.isPointInsideWall(closestPoint, closestWall)) {
+                    this.ghostDoor = ghostDoor;
+                    this.doorClosestWall = closestWall;
+                    this.ghostDoor.draw(
                         this.interactiveContext,
                         closestWall.getSegment()[0],
                         closestWall.getSegment()[1],
